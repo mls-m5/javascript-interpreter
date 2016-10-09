@@ -39,7 +39,65 @@ TEST_CASE("simple assignment expression test") {
 	auto value = context.getVariable("apa");
 
 	ASSERT_EQ(value.toString(), "hejsan");
+}
 
+TEST_CASE("function copy") {
+	class TestFunction: public FunctionDeclaration {
+	public:
+		~TestFunction() {
+
+		}
+
+		Statement *copy() const override {
+			return new TestFunction(*this);
+		}
+	};
+
+	TestFunction function;
+	Expression ex(function);
+
+	ASSERT(dynamic_cast<TestFunction*>(ex.statement.get()), "Function is not of the same type")
+
+	Context context;
+	context.setVariable("apa", ex);
+
+	auto expressionFromContext = context.getVariable("apa");
+	auto newFunction = dynamic_cast<TestFunction*>(expressionFromContext.getObject());
+
+	ASSERT(newFunction, "function is not copied from the context");
+}
+
+TEST_CASE("function call") {
+	class TestFunction: public FunctionDeclaration {
+	public:
+		~TestFunction() {}
+		bool isCalled = false;
+
+		Value run(Context &context) override {
+			isCalled = true;
+			return Value();
+		}
+
+		Statement *copy() const override {
+			return new TestFunction(*this);
+		}
+	};
+
+	TestFunction function;
+	Expression ex(function);
+	Context context;
+	context.setVariable("apa", ex);
+
+	FunctionCall functionCall("apa");
+
+	functionCall.run(context); //Krashar
+
+	auto newExpression = context.getVariable("apa");
+	auto newFunction = dynamic_cast<TestFunction*>(newExpression.getObject());
+
+//	auto functionPointer = dynamic_cast<TestFunction*>(rawPtr);
+	ASSERT(newFunction, "function pointer is null");
+	ASSERT(newFunction->isCalled, "Function is not called");
 }
 
 

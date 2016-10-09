@@ -15,7 +15,6 @@
 #include "value.h"
 
 
-
 class Context {
 public:
 	map<string, Value> variables;
@@ -53,7 +52,7 @@ public:
 
 class Callable {
 public:
-	virtual ~Callable();
+	virtual ~Callable() {}
 
 	virtual Value call(Context &context, class Expression &arguments) {
 		throw "cannot call statement";
@@ -71,6 +70,11 @@ public:
 	Expression(const Statement &s) {
 		statement.reset(s.copy());
 	}
+	//Take the ownership of the pointer
+	Expression(Statement *s) {
+		statement.reset(s);
+	}
+	Expression() = default;
 
 	Value run(Context &context) {
 		return statement->run(context);
@@ -117,8 +121,6 @@ public:
 	}
 
 	Value call(Context &context, Expression &expression) override {
-		Context localContext;
-
 		localContext.parentContext = &context;
 		localContext.setVariable("arguments", expression.run(context));
 		return this->run(localContext);
@@ -128,22 +130,19 @@ public:
 	Statement *copy() const override {
 		return new CodeBlock(*this);
 	}
+	Context localContext;
 };
 
-class FunctionDeclaration: public CodeBlock {
+class FunctionDeclaration: public Statement {
 public:
+	CodeBlock block;
+
+	Identifier identifier;
 	~FunctionDeclaration() {}
 
 	//Do special difference except the arguments
 	Value run(Context &context) override {
-		Context localContext;
-		localContext.parentContext = &context;
-
-		auto value = this->CodeBlock::run(localContext);
-
-		//unload context variables
-
-		return value;
+		return Value(Expression(&block));
 	}
 
 	Statement *copy() const override {
@@ -152,6 +151,7 @@ public:
 };
 
 class FunctionCall: public Statement {
+public:
 	~FunctionCall() {}
 	FunctionCall() = default;
 	FunctionCall(const FunctionCall &) = default;

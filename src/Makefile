@@ -1,5 +1,5 @@
 
-objects = main.o
+objects = main.o virtualmachine.o
 CXXFLAGS = -g  -std=c++11
 all: $(objects)
 	g++ $(objects) -o mjavascript

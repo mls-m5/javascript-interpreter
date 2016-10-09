@@ -10,8 +10,15 @@
 #include "identifier.h"
 using namespace std;
 
+class ObjectValueBase {
+public:
+	virtual ~ObjectValueBase() {};
+
+	//Todo: Implement garbage collection
+};
+
 #pragma once
-class Value {
+class Value: ObjectValueBase {
 public:
 	Value() = default;
 	Value (const Value & value) {
@@ -29,6 +36,10 @@ public:
 	}
 
 	Value (const long & value) {
+		setValue(value);
+	}
+
+	Value (const class ObjectValue &value) {
 		setValue(value);
 	}
 
@@ -51,6 +62,12 @@ public:
 		return *this;
 	}
 
+	Value setValue(const class ObjectValue &value);
+
+	ObjectValue *getObject() {
+		return (class ObjectValue *)objectValue.get();
+	}
+
 	string toString();
 
 	enum VariableType {
@@ -61,7 +78,8 @@ public:
 		String,
 		Symbol,
 		Object,
-		Integer
+		Integer,
+//		Reference, //For value transfere only
 	} type = Undefined;
 
 	//All types except objects are immutable objects
@@ -71,22 +89,24 @@ public:
 		long intValue;
 	};
 
-	unique_ptr<class ObjectValue> objectValue = nullptr;
+	unique_ptr<class ObjectValueBase> objectValue = nullptr;
 };
 
-
-class ObjectValue {
+class ObjectValue: public ObjectValueBase {
 public:
-	virtual ~ObjectValue() {};
+	~ObjectValue() {}
 
 	Value run(class Context& context) {
 		return Value();
 	}
-	//Todo: Implement garbage collection
 
-	virtual ObjectValue *copy() {return new ObjectValue(*this);};
+	virtual ObjectValue *copy() const {
+//		return new ObjectValue(*this);
+		throw "trying to copy pure object value";
+	};
+
+	bool alive = true;
 };
-
 
 class StringValue: public ObjectValue {
 public:
@@ -98,7 +118,7 @@ public:
 	virtual ~StringValue() {};
 	std::string value;
 
-	ObjectValue *copy() override {
+	ObjectValue *copy() const override {
 		return new StringValue(*this);
 	}
 };
@@ -111,7 +131,7 @@ public:
 
 inline Value Value::run(class Context& context) {
 	if (objectValue) {
-		return objectValue->run(context);
+		return ((ObjectValue*)objectValue.get())->run(context);
 	} else {
 		return Value();
 	}
@@ -122,12 +142,16 @@ inline Value& Value::operator =(const Value& value) {
 	switch (value.type) {
 	case Object:
 	case String:
-		objectValue.reset(value.objectValue->copy());
+		objectValue.reset(((ObjectValue*)value.objectValue.get())->copy());
 		break;
 	case Undefined:
 		type = Undefined;
 		objectValue.reset(nullptr);
 		break;
+//	case Reference:
+//		type = Reference;
+//		objectValue.reset(value.objectValue);
+//		break;
 	default:
 		throw "not implemented";
 	}
@@ -150,4 +174,10 @@ inline string Value::toString() {
 	default:
 		return "not implemented";
 	}
+}
+
+inline Value Value::setValue(const ObjectValue &value) {
+	type = Object;
+	objectValue.reset(value.copy());
+	return *this;
 }
