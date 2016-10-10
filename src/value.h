@@ -34,8 +34,25 @@ public:
 		case StatementPointer:
 			statementPtr = value.statementPtr;
 			break;
+		case Identifier:
+			identifierPtr = value.identifierPtr;
+			break;
 		default:
 			throw "not implemented error in Value move constructor";
+		}
+	}
+
+	Value (Value *identifier) {
+		//Pass the value by reference
+		type = Identifier;
+		if (identifier->type == Identifier) {
+			identifierPtr = identifier->identifierPtr;
+		}
+		else if(identifier->type == Undefined) {
+			type = Undefined;
+		}
+		else {
+			identifierPtr = identifier;
 		}
 	}
 
@@ -63,7 +80,8 @@ public:
 	Value run(class ObjectValue& context);
 
 
-	Value& operator =(const Value& value);
+	//Returns identifier value
+	Value operator =(const Value& value);
 
 	~Value() {
 		clear();
@@ -92,9 +110,20 @@ public:
 			return objectPtr;
 		}
 		else {
-			return 0;
+			return nullptr;
 		}
 	}
+
+	Statement *getStatement() {
+		if (type == StatementPointer) {
+			return statementPtr;
+		}
+		else {
+			return nullptr;
+		}
+	}
+
+	Value call(ObjectValue& context, class Value& arguments);
 
 	string toString();
 
@@ -109,6 +138,7 @@ public:
 		Symbol,
 		Object,
 		Integer,
+		Identifier, //Only used for return value
 		StatementPointer,
 	} type = Undefined;
 
@@ -119,11 +149,14 @@ public:
 		class ObjectValue* objectPtr;
 		class StringValue* stringValue;
 		class Statement* statementPtr; //Points to a placie in the abstract source tree
+		Value *identifierPtr;
 		long intValue;
 	};
 };
 
 extern Value UndefinedValue;
+extern class ObjectValue window;
+extern Value windowValue;
 
 class ObjectValue{
 public:
@@ -133,27 +166,76 @@ public:
 		return Value();
 	}
 
-	Value &getVariable(Identifier identifier) {
+	// custom new operator for the object value
+	static void* operator new(std::size_t sz);
+
+	Value getVariable(Identifier identifier) {
+		if (this == &window) {
+			if (identifier.name == "window") {
+				return windowValue;
+			}
+		}
 		for (auto &it: children) {
 			if (it.first == identifier.name) {
-				return it.second;
+				return Value(&it.second); //Returns identifier
 			}
 		}
 
-		return UndefinedValue; //Undefined
+		if (this->parent) {
+			//Continue search
+			return this->parent->getVariable(identifier);
+		}
+		else {
+			return UndefinedValue; //Undefined
+		}
+	}
+
+	vector<pair<string, Value>>::iterator getVariableIterator(Identifier identifier) {
+		for (auto it = children.begin(); it != children.end(); ++it) {
+			if ((*it).first == identifier.name) {
+				return it;
+			}
+		}
+
+		return children.end();
 	}
 
 	void setVariable(Identifier identifier, Value value) {
 		if (value.type == Value::Undefined) {
 			throw "value not defined";
 		}
-		auto &var = getVariable(identifier);
-		if (var.type == Value::Undefined) {
+		auto it = getVariableIterator(identifier);
+		if (it == children.end()) {
 			children.push_back(pair<string, Value>(identifier.name, value));
 		}
 		else {
-			var = value;
+			it->second = value;
 		}
+	}
+
+	void deleteVariable(Identifier identifier) {
+		auto it = getVariableIterator(identifier);
+		if (it == children.end()) {
+			return;
+		}
+
+		children.erase(it);
+	}
+
+	operator string () {
+		return toString();
+	}
+
+	virtual string toString() {
+		string ret = "{";
+
+		for (auto it: children) {
+			ret += (it.first + ": " + it.second.toString() + ", ");
+		}
+
+		ret += "}";
+
+		return ret;
 	}
 
 	vector<pair<string, Value>> children;
@@ -178,17 +260,31 @@ public:
 	virtual Value run(ObjectValue &context) {
 		throw "abstract class statement called";
 	}
+
+	virtual string toString() {
+		return "statement";
+	}
+
+	Value call(ObjectValue &context, Value &expression) {
+		ObjectValue localContext;
+		localContext.parent = &context;
+		localContext.setVariable("arguments", expression);
+		return this->run(localContext);
+	}
 };
 
 inline Value Value::run(class ObjectValue& context) {
 	if (type == StatementPointer) {
 		return statementPtr->run(context);
 	} else {
-		return Value();
+		return *this;
 	}
 }
 
-inline Value& Value::operator =(const Value& value) {
+inline Value Value::operator =(const Value& value) {
+	if (type == Identifier) {
+		*identifierPtr = value;
+	}
 	clear();
 	switch (value.type) {
 	case Object:
@@ -197,13 +293,16 @@ inline Value& Value::operator =(const Value& value) {
 	case String:
 		stringValue = new StringValue(*value.stringValue);
 		break;
+	case StatementPointer:
+		statementPtr = value.statementPtr;
+		break;
 	case Undefined:
 		break;
 	default:
 		throw "not implemented";
 	}
 	type = value.type;
-	return *this;
+	return this;
 }
 
 inline Value Value::setValue(string value) {
@@ -213,12 +312,24 @@ inline Value Value::setValue(string value) {
 	return *this;
 }
 
+inline Value Value::call(ObjectValue& context, class Value& arguments) {
+	if (type == StatementPointer) {
+		return statementPtr->call(context, arguments);
+	} else {
+		throw "value is not callable";
+	}
+}
+
 inline string Value::toString() {
 	switch (type) {
 	case Undefined:
 		return "Undefined";
 	case String:
 		return stringValue->value;
+	case Object:
+		return objectPtr->toString();
+	case StatementPointer:
+		return statementPtr->toString();
 	default:
 		return "not implemented";
 	}
@@ -242,3 +353,4 @@ inline void Value::clear() {
 
 	type = Undefined;
 }
+

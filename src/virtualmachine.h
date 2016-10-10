@@ -18,7 +18,7 @@ class Callable {
 public:
 	virtual ~Callable() {}
 
-	virtual Value call(ObjectValue &context, class Expression &arguments) {
+	virtual Value call(ObjectValue &context, class Value &arguments) {
 		throw "cannot call statement";
 	}
 };
@@ -44,6 +44,47 @@ public:
 	}
 };
 
+class PropertyAccessor: public Statement {
+public:
+	PropertyAccessor(Value object, Value member):
+		object(object), member(member) {}
+
+	Value run(ObjectValue &context) override {
+		auto variable = context.getVariable(object.toString());
+
+		if (variable.type == Value::Undefined) {
+			throw "variable " + object.run(context).toString() + " is not defined";
+		}
+
+		auto object = variable.getObject();
+		if (object) {
+			return object->getVariable(member.run(context).toString());
+		}
+		else {
+			throw "variable is not a object";
+		}
+
+	}
+
+	Value object;
+	Value member;
+};
+
+class DeleteStatement: public Statement {
+public:
+	DeleteStatement() = default;
+	DeleteStatement(Identifier identifier): identifier(identifier) {}
+
+	Value run(ObjectValue &context) override {
+		context.deleteVariable(identifier);
+
+		return UndefinedValue;
+	}
+
+
+	Identifier identifier;
+};
+
 class CodeBlock: public Statement, public Callable {
 public:
 	~CodeBlock() {}
@@ -57,14 +98,6 @@ public:
 		//unload scoped "let" variables
 	}
 
-	Value call(ObjectValue &context, Expression &expression) override {
-		//Todo: Fix parent value of ObjectValue
-//		localObjectValue.parentObjectValue = &context;
-//		localObjectValue.setVariable("arguments", expression.run(context));
-//		return this->run(localObjectValue);
-	}
-
-	ObjectValue localObjectValue;
 };
 
 class FunctionDeclaration: public Statement {
@@ -78,10 +111,6 @@ public:
 	Value run(ObjectValue &context) override {
 		return Value(block);
 	}
-//
-//	Statement *copy() const override {
-//		return new FunctionDeclaration(*this);
-//	}
 };
 
 class FunctionCall: public Statement {
@@ -91,34 +120,23 @@ public:
 	FunctionCall(const FunctionCall &) = default;
 	FunctionCall(Identifier identifier):
 		identifier(identifier) {}
+	FunctionCall(Identifier identifier, Value arguments):
+	identifier(identifier), arguments(arguments){}
 
-//	shared_ptr<FunctionDeclaration> function;
 	Identifier identifier;
+	Value arguments;
 
 	//Todo make it possible to send arguments
 	Value run(ObjectValue &context) override {
 		auto functionValue = context.getVariable(identifier);
 
 		if (functionValue.type != Value::Undefined) {
-			return functionValue.run(context);
+			return functionValue.call(context, arguments);
 		}
 		else {
 			return Value();
 		}
 	}
-
-//	Statement *copy() const override {
-//		return new FunctionCall(*this);
-//	}
-};
-
-class ConsoleLog: public FunctionDeclaration {
-	Value run(ObjectValue &context) override {
-		cout << context.getVariable("arguments").toString() << endl;
-
-		return Value();
-	}
-
 };
 
 class VariableGetter: public Statement {
@@ -134,12 +152,13 @@ public:
 		return context.getVariable(variableName);
 	}
 
-
-//	Statement *copy() const override {
-//		return new VariableGetter(*this);
-//	}
-
 	Identifier variableName;
 };
+
+void runGarbageCollection();
+
+int getGlobalObjectCount();
+
+
 
 

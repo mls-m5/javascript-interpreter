@@ -14,9 +14,13 @@
 
 std::vector<std::unique_ptr<ObjectValue>> javascriptMemory;
 
-ObjectValue window; //Holder for all the local variables
-Value UndefinedValue;
 
+void* ObjectValue::operator new(std::size_t sz) {
+	std::cout << "custom new called for object" << '\n';
+	auto ptr = ::operator new(sz);
+	javascriptMemory.push_back(std::unique_ptr<ObjectValue>((ObjectValue*)ptr));
+	return ptr;
+}
 
 void markAllChildren(ObjectValue *object) {
 	if (object->alive) {
@@ -36,12 +40,29 @@ void runGarbageCollection() {
 		ptr->alive = false;
 	}
 
+	window.alive = false; //Prepare window for algorithm
 	markAllChildren(&window);
 
 	//Remove all that has not been marked as alive
-	auto f = [](std::unique_ptr<ObjectValue> & value){return value->alive == false;};
-	javascriptMemory.erase(std::remove_if(javascriptMemory.begin(),
-	                              javascriptMemory.end(), f));
+	auto f = [](const std::unique_ptr<ObjectValue> & value){
+		return !value->alive;
+	};
+	javascriptMemory.erase(
+			std::remove_if(
+					javascriptMemory.begin(),
+	                javascriptMemory.end(), f),
+			javascriptMemory.end()
+	);
 }
+
+
+int getGlobalObjectCount() {
+	return javascriptMemory.size();
+}
+
+Value getGlobalContext() {
+	return window;
+}
+
 
 

@@ -30,37 +30,50 @@ TEST_CASE("simple context test") {
 }
 
 TEST_CASE("simple assignment expression test") {
-	ObjectValue context;
 	VariableGetter vg("bepa");
 	Assignment assignment1("apa", vg);
 
-	context.setVariable("bepa", "hejsan");
-	assignment1.run(context);
+	window.setVariable("bepa", "hejsan");
+	assignment1.run(window);
 
-	auto value = context.getVariable("apa");
+	auto value = window.getVariable("apa");
 
 	ASSERT_EQ(value.toString(), "hejsan");
+
+	window.deleteVariable("bepa");
+	window.deleteVariable("apa");
+
+	runGarbageCollection();
 }
 
-TEST_CASE("function copy") {
-	class TestFunction: public FunctionDeclaration {
-	public:
-		~TestFunction() {
+TEST_CASE("delete statement") {
+	window.setVariable("apa", "xxx");
 
-		}
-	};
+	DeleteStatement deleteStatement("apa");
 
-	TestFunction function;
-	Value ex(function);
+	deleteStatement.run(window);
 
-	ObjectValue context;
-	context.setVariable("apa", ex);
+	ASSERT_EQ(window.getVariable("apa").type, Value::Undefined);
 
-	auto expressionFromContext = context.getVariable("apa");
-	auto newFunction = dynamic_cast<TestFunction*>(expressionFromContext.getObject());
-
-	ASSERT(newFunction, "function is not copied from the context");
+	runGarbageCollection();
 }
+
+TEST_CASE("property accessor") {
+	ObjectValue object;
+	object.setVariable("x", "heej");
+
+	window.setVariable("apa", object);
+
+	PropertyAccessor accessor("apa", "x");
+
+	auto value = accessor.run(window);
+	ASSERT_EQ(value.toString(), "heej");
+
+	window.deleteVariable("apa");
+	runGarbageCollection();
+
+}
+
 
 TEST_CASE("function call") {
 	class TestFunction: public FunctionDeclaration {
@@ -75,20 +88,21 @@ TEST_CASE("function call") {
 	};
 
 	TestFunction function;
-	Value ex(function);
-	ObjectValue context;
-	context.setVariable("apa", ex);
+	window.setVariable("apa", function);
 
 	FunctionCall functionCall("apa");
 
-	functionCall.run(context); //Krashar
+	functionCall.run(window);
 
-	auto newExpression = context.getVariable("apa");
-	auto newFunction = dynamic_cast<TestFunction*>(newExpression.getObject());
+	auto newExpression = window.getVariable("apa");
+	auto newFunction = dynamic_cast<TestFunction*>(newExpression.getStatement());
 
-//	auto functionPointer = dynamic_cast<TestFunction*>(rawPtr);
 	ASSERT(newFunction, "function pointer is null");
 	ASSERT(newFunction->isCalled, "Function is not called");
+
+	window.deleteVariable("apa");
+
+	runGarbageCollection();
 }
 
 

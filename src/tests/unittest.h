@@ -35,6 +35,7 @@ inline int runTests(){
 		}
 		catch (char const *e) {
 			std::cerr << "error: " << e << endl;
+			test_result = -2;
 		}
 		catch (...) {
 			std::cerr << "error" << endl;
