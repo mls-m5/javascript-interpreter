@@ -9,16 +9,26 @@
 #include "virtualmachine.h"
 #include <vector>
 #include <memory>
+#include <algorithm>
 
 
-typedef std::shared_ptr<ObjectValue> ObjectValuePtr;
+std::vector<std::unique_ptr<ObjectValue>> javascriptMemory;
 
-
-std::vector<ObjectValuePtr> javascriptMemory;
+ObjectValue window; //Holder for all the local variables
+Value UndefinedValue;
 
 
 void markAllChildren(ObjectValue *object) {
-//	for (auto &ptr: object->)
+	if (object->alive) {
+		return; //already marked
+	}
+	object->alive = true;
+	for (auto &ptr: object->children) {
+		auto o = ptr.second.getObject();
+		if (o) {
+			markAllChildren(o);
+		}
+	}
 }
 
 void runGarbageCollection() {
@@ -26,11 +36,12 @@ void runGarbageCollection() {
 		ptr->alive = false;
 	}
 
-	for (auto &ptr: javascriptMemory) {
-		if (ptr->alive == false) {
+	markAllChildren(&window);
 
-		}
-	}
+	//Remove all that has not been marked as alive
+	auto f = [](std::unique_ptr<ObjectValue> & value){return value->alive == false;};
+	javascriptMemory.erase(std::remove_if(javascriptMemory.begin(),
+	                              javascriptMemory.end(), f));
 }
 
 

@@ -14,73 +14,13 @@
 
 #include "value.h"
 
-
-class Context {
-public:
-	map<string, Value> variables;
-
-	Context *parentContext = 0;
-
-	Value &getVariable(Identifier identifier) {
-		auto f = variables.find(identifier.name);
-
-		if (f == variables.end() && parentContext) {
-			return parentContext->getVariable(identifier);
-		}
-		else {
-			return f->second;
-		}
-	}
-
-	Value setVariable(Identifier identifier, Value value) {
-		variables[identifier.name] = value;
-		return value;
-	}
-};
-
-class Statement{
-public:
-	virtual ~Statement() {}
-	virtual Value run(Context &context) {
-		throw "abstract class statement called";
-	}
-
-	virtual Statement *copy() const  = 0; //{
-//		return new Statement(*this);
-//	}
-};
-
 class Callable {
 public:
 	virtual ~Callable() {}
 
-	virtual Value call(Context &context, class Expression &arguments) {
+	virtual Value call(ObjectValue &context, class Expression &arguments) {
 		throw "cannot call statement";
 	}
-};
-
-class Expression: public ObjectValue {
-public:
-	Expression(const Expression &e) {
-		statement.reset(e.statement->copy());
-	}
-	Expression(Expression &&e) {
-		statement = move(e.statement);
-	}
-	Expression(const Statement &s) {
-		statement.reset(s.copy());
-	}
-	//Take the ownership of the pointer
-	Expression(Statement *s) {
-		statement.reset(s);
-	}
-	Expression() = default;
-
-	Value run(Context &context) {
-		return statement->run(context);
-	}
-
-	unique_ptr<Statement> statement;
 };
 
 
@@ -88,31 +28,28 @@ class Assignment: public Statement {
 public:
 	~Assignment() {}
 	Assignment() = default;
-	Assignment(Identifier identifier, Expression expression):
+	Assignment(Identifier identifier, Value expression):
 	identifier(identifier),
 	expression(expression) {}
 
 	Identifier identifier;
-	Expression expression;
+	Value expression;
 
-	Value run(Context &context) override {
+	Value run(ObjectValue &context) override {
 		//Todo: in the more performant version this should be calculated in forehand
 		auto value = expression.run(context);
 
-		return context.setVariable(identifier, value);
-	}
-
-	Statement *copy() const override {
-		return new Assignment(*this);
+		context.setVariable(identifier, value);
+		return value;
 	}
 };
 
 class CodeBlock: public Statement, public Callable {
 public:
 	~CodeBlock() {}
-	vector<Expression> statements;
+	vector<Value> statements;
 
-	Value run(Context &context) override {
+	Value run(ObjectValue &context) override {
 		map<string, Value> localVariables;
 		for (auto &statement: statements) {
 			statement.run(context);
@@ -120,17 +57,14 @@ public:
 		//unload scoped "let" variables
 	}
 
-	Value call(Context &context, Expression &expression) override {
-		localContext.parentContext = &context;
-		localContext.setVariable("arguments", expression.run(context));
-		return this->run(localContext);
+	Value call(ObjectValue &context, Expression &expression) override {
+		//Todo: Fix parent value of ObjectValue
+//		localObjectValue.parentObjectValue = &context;
+//		localObjectValue.setVariable("arguments", expression.run(context));
+//		return this->run(localObjectValue);
 	}
 
-
-	Statement *copy() const override {
-		return new CodeBlock(*this);
-	}
-	Context localContext;
+	ObjectValue localObjectValue;
 };
 
 class FunctionDeclaration: public Statement {
@@ -141,13 +75,13 @@ public:
 	~FunctionDeclaration() {}
 
 	//Do special difference except the arguments
-	Value run(Context &context) override {
-		return Value(Expression(&block));
+	Value run(ObjectValue &context) override {
+		return Value(block);
 	}
-
-	Statement *copy() const override {
-		return new FunctionDeclaration(*this);
-	}
+//
+//	Statement *copy() const override {
+//		return new FunctionDeclaration(*this);
+//	}
 };
 
 class FunctionCall: public Statement {
@@ -162,7 +96,7 @@ public:
 	Identifier identifier;
 
 	//Todo make it possible to send arguments
-	Value run(Context &context) override {
+	Value run(ObjectValue &context) override {
 		auto functionValue = context.getVariable(identifier);
 
 		if (functionValue.type != Value::Undefined) {
@@ -173,13 +107,13 @@ public:
 		}
 	}
 
-	Statement *copy() const override {
-		return new FunctionCall(*this);
-	}
+//	Statement *copy() const override {
+//		return new FunctionCall(*this);
+//	}
 };
 
 class ConsoleLog: public FunctionDeclaration {
-	Value run(Context &context) override {
+	Value run(ObjectValue &context) override {
 		cout << context.getVariable("arguments").toString() << endl;
 
 		return Value();
@@ -196,14 +130,14 @@ public:
 	VariableGetter(Identifier identifier): variableName(identifier) {}
 
 
-	Value run(Context &context) override {
+	Value run(ObjectValue &context) override {
 		return context.getVariable(variableName);
 	}
 
 
-	Statement *copy() const override {
-		return new VariableGetter(*this);
-	}
+//	Statement *copy() const override {
+//		return new VariableGetter(*this);
+//	}
 
 	Identifier variableName;
 };

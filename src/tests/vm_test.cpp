@@ -21,7 +21,7 @@ TEST_CASE("simple assignment test") {
 }
 
 TEST_CASE("simple context test") {
-	Context context;
+	ObjectValue context;
 
 	context.setVariable("bepa", "tja");
 	context.setVariable("cepa", "re");
@@ -30,8 +30,9 @@ TEST_CASE("simple context test") {
 }
 
 TEST_CASE("simple assignment expression test") {
-	Context context;
-	Assignment assignment1("apa", VariableGetter("bepa"));
+	ObjectValue context;
+	VariableGetter vg("bepa");
+	Assignment assignment1("apa", vg);
 
 	context.setVariable("bepa", "hejsan");
 	assignment1.run(context);
@@ -47,18 +48,12 @@ TEST_CASE("function copy") {
 		~TestFunction() {
 
 		}
-
-		Statement *copy() const override {
-			return new TestFunction(*this);
-		}
 	};
 
 	TestFunction function;
-	Expression ex(function);
+	Value ex(function);
 
-	ASSERT(dynamic_cast<TestFunction*>(ex.statement.get()), "Function is not of the same type")
-
-	Context context;
+	ObjectValue context;
 	context.setVariable("apa", ex);
 
 	auto expressionFromContext = context.getVariable("apa");
@@ -73,19 +68,15 @@ TEST_CASE("function call") {
 		~TestFunction() {}
 		bool isCalled = false;
 
-		Value run(Context &context) override {
+		Value run(ObjectValue &context) override {
 			isCalled = true;
 			return Value();
-		}
-
-		Statement *copy() const override {
-			return new TestFunction(*this);
 		}
 	};
 
 	TestFunction function;
-	Expression ex(function);
-	Context context;
+	Value ex(function);
+	ObjectValue context;
 	context.setVariable("apa", ex);
 
 	FunctionCall functionCall("apa");

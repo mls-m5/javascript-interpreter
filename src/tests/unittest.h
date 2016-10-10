@@ -33,6 +33,9 @@ inline int runTests(){
 		try {
 			it.second();
 		}
+		catch (char const *e) {
+			std::cerr << "error: " << e << endl;
+		}
 		catch (...) {
 			std::cerr << "error" << endl;
 			test_result = -2;
