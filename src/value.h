@@ -274,26 +274,6 @@ public:
 	bool alive = true;
 };
 
-class Identifier: public ObjectValue{
-public:
-	Identifier() = default;
-	Identifier(const Identifier&) = default;
-	Identifier(Identifier &&) = default;
-	Identifier(string name) : name(name) {};
-	Identifier(const char name[]) : name(name) {};
-	string name;
-
-	Value run(ObjectValue& context) {
-		return context.getVariable(name);
-	}
-	virtual string toString() {
-		return name;
-	}
-
-	//Todo: Add member functions and stuff
-	//Todo add posibility to use fixed place in memory
-};
-
 
 class StringValue {
 public:
@@ -324,6 +304,28 @@ public:
 		return this->run(localContext);
 	}
 };
+
+
+class Identifier: public Statement{
+public:
+	Identifier() = default;
+	Identifier(const Identifier&) = default;
+	Identifier(Identifier &&) = default;
+	Identifier(string name) : name(name) {};
+	Identifier(const char name[]) : name(name) {};
+	string name;
+
+	Value run(ObjectValue& context) {
+		return context.getVariable(name);
+	}
+	virtual string toString() {
+		return name;
+	}
+
+	//Todo: Add member functions and stuff
+	//Todo add posibility to use fixed place in memory
+};
+
 
 inline Value Value::run(class ObjectValue& context) {
 	if (type == StatementPointer) {

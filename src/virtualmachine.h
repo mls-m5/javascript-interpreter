@@ -61,7 +61,7 @@ public:
 	}
 };
 
-class PropertyAccessor: public Statement {
+class PropertyAccessor: public Identifier {
 public:
 	PropertyAccessor(Value object, Value member):
 		object(object), member(member) {}
@@ -80,7 +80,6 @@ public:
 		else {
 			throw "variable is not a object";
 		}
-
 	}
 
 	Value object;

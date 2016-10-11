@@ -66,7 +66,9 @@ TEST_CASE("property accessor") {
 
 	window.setVariable("apa", object);
 
-	PropertyAccessor accessor(*new Identifier("apa"), "x");
+	Identifier id("apa");
+
+	PropertyAccessor accessor(id, "x");
 
 	auto value = accessor.run(window);
 	ASSERT_EQ(value.toString(), "heej");
@@ -92,7 +94,9 @@ TEST_CASE("function call") {
 	TestFunction function;
 	window.setVariable("apa", function);
 
-	FunctionCall functionCall(*new Identifier("apa"));
+	Identifier id("apa");
+
+	FunctionCall functionCall(id);
 
 	functionCall.run(window);
 

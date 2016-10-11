@@ -8,6 +8,8 @@ void printValue(Value value) {
 	cout << value.toString() << endl;
 }
 
+vector<Statement *> statements;
+
 class SimpleInterpreter {
 public:
 	static Value parseValue(string word) {
@@ -21,7 +23,9 @@ public:
 			return number;
 		}
 		else {
-			return *new Identifier(word);
+			auto statement = new Identifier(word);
+			statements.push_back(statement);
+			return *statement;
 		}
 	}
 
