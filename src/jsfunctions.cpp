@@ -20,8 +20,9 @@ public:
 
 static class ConsoleLog: public NativeFunction {
 	Value run(ObjectValue &context) override {
-		auto arguments = context.getVariable("arguments");
-		cout << arguments.toString() << endl;
+		auto arguments = context.getVariable("arguments", false);
+		cout << arguments.run(context).toString() << endl;
+		return UndefinedValue;
 	}
 
 } consoleLog;
@@ -31,7 +32,7 @@ static class Initializer {
 public:
 	Initializer() {
 		auto console = new ObjectValue;
-		console->setVariable("log", consoleLog);
+		console->defineVariable("log", consoleLog);
 		window.setVariable("console", *console);
 		window.setVariable("log", consoleLog); //Todo: remove this.. only for debugging
 	}

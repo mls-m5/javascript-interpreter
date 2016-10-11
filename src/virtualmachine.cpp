@@ -16,7 +16,7 @@ std::vector<std::unique_ptr<ObjectValue>> javascriptMemory;
 
 
 void* ObjectValue::operator new(std::size_t sz) {
-	std::cout << "custom new called for object" << '\n';
+//	std::cout << "custom new called for object" << '\n';
 	auto ptr = ::operator new(sz);
 	javascriptMemory.push_back(std::unique_ptr<ObjectValue>((ObjectValue*)ptr));
 	return ptr;

@@ -30,10 +30,12 @@ TEST_CASE("simple context test") {
 }
 
 TEST_CASE("simple assignment expression test") {
-	VariableGetter vg("bepa");
-	Assignment assignment1("apa", vg);
+	Identifier id1("apa");
+	Identifier id2("bepa");
+	Assignment assignment1(id1, id2);
 
-	window.setVariable("bepa", "hejsan");
+	window.defineVariable("bepa", "hejsan");
+	window.defineVariable("apa", "dasan");
 	assignment1.run(window);
 
 	auto value = window.getVariable("apa");
@@ -53,18 +55,18 @@ TEST_CASE("delete statement") {
 
 	deleteStatement.run(window);
 
-	ASSERT_EQ(window.getVariable("apa").type, Value::Undefined);
+	ASSERT_EQ(window.getVariable("apa").getValue().type, Value::Undefined);
 
 	runGarbageCollection();
 }
 
 TEST_CASE("property accessor") {
 	ObjectValue object;
-	object.setVariable("x", "heej");
+	object.defineVariable("x", "heej");
 
 	window.setVariable("apa", object);
 
-	PropertyAccessor accessor("apa", "x");
+	PropertyAccessor accessor(*new Identifier("apa"), "x");
 
 	auto value = accessor.run(window);
 	ASSERT_EQ(value.toString(), "heej");
@@ -90,11 +92,11 @@ TEST_CASE("function call") {
 	TestFunction function;
 	window.setVariable("apa", function);
 
-	FunctionCall functionCall("apa");
+	FunctionCall functionCall(*new Identifier("apa"));
 
 	functionCall.run(window);
 
-	auto newExpression = window.getVariable("apa");
+	auto newExpression = window.getVariable("apa", false);
 	auto newFunction = dynamic_cast<TestFunction*>(newExpression.getStatement());
 
 	ASSERT(newFunction, "function pointer is null");
@@ -102,6 +104,21 @@ TEST_CASE("function call") {
 
 	window.deleteVariable("apa");
 
+	runGarbageCollection();
+}
+
+TEST_CASE("identifier test") {
+	Identifier identifier("apa");
+
+	window.defineVariable("apa", "hej");
+
+	auto ret = identifier.run(window);
+
+	ASSERT_EQ(ret.toString(), "hej");
+
+
+
+	window.deleteVariable("apa");
 	runGarbageCollection();
 }
 

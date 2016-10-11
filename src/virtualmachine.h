@@ -28,19 +28,36 @@ class Assignment: public Statement {
 public:
 	~Assignment() {}
 	Assignment() = default;
-	Assignment(Identifier identifier, Value expression):
+	Assignment(Value identifier, Value expression):
 	identifier(identifier),
 	expression(expression) {}
 
-	Identifier identifier;
+	Value identifier;
 	Value expression;
 
 	Value run(ObjectValue &context) override {
 		//Todo: in the more performant version this should be calculated in forehand
 		auto value = expression.run(context);
 
-		context.setVariable(identifier, value);
-		return value;
+		auto variable = identifier.run(context);
+		if (variable.type == Value::Reference) {
+			*variable.referencePtr = value;
+			return variable;
+		}
+		else {
+			throw "variable not defined";
+		}
+	}
+};
+
+class VariableDeclaration: public Statement {
+public:
+	~VariableDeclaration() {}
+	VariableDeclaration(Value name): name(name) {}
+
+	Value name;
+	Value run(ObjectValue &context) override {
+		return context.defineVariable(name.run(context).toString());
 	}
 };
 
@@ -50,7 +67,7 @@ public:
 		object(object), member(member) {}
 
 	Value run(ObjectValue &context) override {
-		auto variable = context.getVariable(object.toString());
+		auto variable = object.run(context);//context.getVariable(object.toString());
 
 		if (variable.type == Value::Undefined) {
 			throw "variable " + object.run(context).toString() + " is not defined";
@@ -73,7 +90,7 @@ public:
 class DeleteStatement: public Statement {
 public:
 	DeleteStatement() = default;
-	DeleteStatement(Identifier identifier): identifier(identifier) {}
+	DeleteStatement(string identifier): identifier(identifier) {}
 
 	Value run(ObjectValue &context) override {
 		context.deleteVariable(identifier);
@@ -82,7 +99,7 @@ public:
 	}
 
 
-	Identifier identifier;
+	string identifier;
 };
 
 class CodeBlock: public Statement, public Callable {
@@ -118,41 +135,25 @@ public:
 	~FunctionCall() {}
 	FunctionCall() = default;
 	FunctionCall(const FunctionCall &) = default;
-	FunctionCall(Identifier identifier):
+	FunctionCall(Value identifier):
 		identifier(identifier) {}
-	FunctionCall(Identifier identifier, Value arguments):
+	FunctionCall(Value identifier, Value arguments):
 	identifier(identifier), arguments(arguments){}
 
-	Identifier identifier;
+	Value identifier;
 	Value arguments;
 
 	//Todo make it possible to send arguments
 	Value run(ObjectValue &context) override {
-		auto functionValue = context.getVariable(identifier);
+		auto functionValue = identifier.run(context).getValue();//context.getVariable(identifier);
 
 		if (functionValue.type != Value::Undefined) {
 			return functionValue.call(context, arguments);
 		}
 		else {
-			return Value();
+			throw "not a function";
 		}
 	}
-};
-
-class VariableGetter: public Statement {
-public:
-	~VariableGetter() {};
-	VariableGetter() = default;
-	VariableGetter(const VariableGetter &) = default;
-	VariableGetter(VariableGetter &&) = default;
-	VariableGetter(Identifier identifier): variableName(identifier) {}
-
-
-	Value run(ObjectValue &context) override {
-		return context.getVariable(variableName);
-	}
-
-	Identifier variableName;
 };
 
 void runGarbageCollection();
