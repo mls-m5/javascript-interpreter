@@ -311,9 +311,11 @@ public:
 	Identifier() = default;
 	Identifier(const Identifier&) = default;
 	Identifier(Identifier &&) = default;
-	Identifier(string name) : name(name) {};
+	//If createNew is true a variable is created if it does not exist
+	Identifier(string name, bool createNew = false) : name(name), createNew(createNew) {};
 	Identifier(const char name[]) : name(name) {};
 	string name;
+	bool createNew = false;
 
 	Value run(ObjectValue& context) {
 		return context.getVariable(name);

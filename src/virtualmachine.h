@@ -53,11 +53,12 @@ public:
 class VariableDeclaration: public Statement {
 public:
 	~VariableDeclaration() {}
-	VariableDeclaration(Value name): name(name) {}
+	VariableDeclaration(Value name, Value value = Value()): name(name), value(value) {}
 
 	Value name;
+	Value value;
 	Value run(ObjectValue &context) override {
-		return context.defineVariable(name.run(context).toString());
+		return context.defineVariable(name.run(context).toString(), value.run(context));
 	}
 };
 
@@ -111,7 +112,6 @@ public:
 		for (auto &statement: statements) {
 			statement.run(context);
 		}
-		//unload scoped "let" variables
 	}
 
 };

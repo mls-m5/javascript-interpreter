@@ -55,18 +55,22 @@ public:
 			cout << ass.run(window).toString() << endl;
 		}
 		else if (first == "assmem") {
-//			Assignment ass()
-			PropertyAccessor accessor(words[1], words[2]);
+			PropertyAccessor accessor(words[1], words[2].toString());
 			Assignment ass(accessor, words[3]);
+
 			printValue(ass.run(window).toString());
 		}
 		else if (first == "call") {
 			FunctionCall call(words[1], words[2]);
 			call.run(window);
 		}
-		else if (first == "let") {
-			VariableDeclaration declaration(words[1].toString());
-			declaration.run(window);
+		else if (first == "let" || first == "var") {
+			Value defaultValue;
+			if (words.size() > 3 || words[2].toString() == "=") {
+				defaultValue = words[3];
+			}
+			VariableDeclaration declaration(words[1].toString(), defaultValue);
+			printValue(declaration.run(window));
 		}
 		else if (first == "delete") {
 			DeleteStatement deleteStatement(words[1].toString());
@@ -76,8 +80,12 @@ public:
 			Assignment ass(words[0], words[2]);
 			cout << ass.run(window).toString() << endl;
 		}
+		else if (words.size() == 3 && words[1].toString() == ".") {
+			PropertyAccessor accessor(words[0], words[2].toString());
+			printValue(accessor.run(window));
+		}
 		else if(words.size() == 1) {
-			cout << window.getVariable(first).toString() << endl;
+			printValue(words[0].run(window));
 		}
 	}
 };
@@ -85,7 +93,7 @@ public:
 
 int main(int argc, char const *argv[])
 {
-	cout << "mjavascript 0.0002" << endl;
+	cout << "mjavascript 0.0003" << endl;
 
 	SimpleInterpreter interpreter;
 
@@ -96,21 +104,4 @@ int main(int argc, char const *argv[])
 		getline(cin, line);
 		interpreter.interpret(line);
 	}
-
-//	//Testing
-//	ObjectValue context;
-//	Value value, value2;
-//	value.setValue("hej");
-//	cout << "apa direct: " << value.toString() << endl;
-//	value2 = value;
-//	cout << "apa after copy: " << value2.toString() << endl;
-//
-//	context.setVariable("bepa", "tja");
-//	context.setVariable("cepa", "re");
-//	cout << "bepa: " << context.getVariable("bepa").toString() << endl;
-//	Assignment assignment1("apa", VariableGetter("bepa"));
-//	assignment1.run(context);
-//	cout << "apa: " << context.getVariable("apa").toString() << endl;
-//
-//	return 0;
 }
