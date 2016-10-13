@@ -37,15 +37,7 @@ public:
 	}
 
 	vector<Value> split(string line) {
-//		std::istringstream ss(line);
-//
 		std::vector<Value> vec;
-//		string word;
-//		while (!ss.eof()) {
-//			ss >> word;
-//			vec.push_back(parseValue(word));
-//		}
-//		return vec;
 
 		auto words = lexer.tokenize(line);
 

@@ -70,7 +70,7 @@ public:
 		}
 
 		setCharacterType("+-*/^.=<>", Operator);
-		setCharacterType("[]()", Paranthesis);
+		setCharacterType("[](){}", Paranthesis);
 		setCharacterType(" \n	", Space);
 		setCharacterType("0123456789", Digit);
 		setCharacterType(".", Period);

@@ -92,7 +92,7 @@ inline int runTests(){
 
 #define PRINT_INFO std::cout << __FILE__ << ":" << __LINE__ << ": " ;
 #define ASSERT(x, error) if (!(x)) { PRINT_INFO; test_result ++; std::cout << #x << ": " << error << std::endl; return; }
-#define ASSERT_EQ(x, y) if ((x != y)) { PRINT_INFO; test_result ++; std::cout << #x << " = " << x << \
+#define ASSERT_EQ(x, y) if (!(x == y)) { PRINT_INFO; test_result ++; std::cout << #x << " = " << x << \
 	" is not equal to "	<< #y << " = " << y << std::endl; test_result ++; return; }
 #define ASSERT_NE(x, y) if ((x == y)) { PRINT_INFO; std::cout << #x << " = " << x << \
 	" is equal to "	<< #y << " = " << y << std::endl; test_result ++; return; }
