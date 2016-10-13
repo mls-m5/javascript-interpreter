@@ -317,15 +317,29 @@ public:
 	string name;
 	bool createNew = false;
 
-	Value run(ObjectValue& context) {
+	Value run(ObjectValue& context) override {
 		return context.getVariable(name);
 	}
-	virtual string toString() {
+	string toString() override {
 		return name;
 	}
 
 	//Todo: Add member functions and stuff
 	//Todo add posibility to use fixed place in memory
+};
+
+class Operator: public Statement{
+	Operator(string value): value(value) {}
+
+	Value run(ObjectValue &context) override {
+		throw "operator not callable";
+	}
+
+	string toString() override {
+		return value;
+	}
+
+	string value;
 };
 
 

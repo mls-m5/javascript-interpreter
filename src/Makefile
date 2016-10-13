@@ -6,7 +6,7 @@ all: $(objects)
 	g++ $(objects) -o $(target) $(CXXFLAGS)
 	make -C tests/
 
-%.o: %.cpp virtualmachine.h value.h
+%.o: %.cpp virtualmachine.h value.h lexer.h
 	g++ -c $< -o $@ $(CXXFLAGS)
 	
 clean:

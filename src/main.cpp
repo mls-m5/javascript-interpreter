@@ -1,5 +1,6 @@
 
 #include "virtualmachine.h"
+#include "lexer.h"
 #include <sstream>
 
 using namespace std;
@@ -12,9 +13,15 @@ vector<Statement *> statements;
 
 class SimpleInterpreter {
 public:
+	SimpleLexer lexer;
+
 	static Value parseValue(string word) {
 		if (word[0] == '\"') {
 			return Value(word.substr(1, word.size() - 2));
+		}
+		else if (word == ".") {
+			auto statement = new Identifier(word);
+			return *statement;
 		}
 		else if (isdigit(word[0]) || word[0] == '.') {
 			istringstream ss(word);
@@ -29,15 +36,23 @@ public:
 		}
 	}
 
-	static vector<Value> split(string line) {
-		std::istringstream ss(line);
-
+	vector<Value> split(string line) {
+//		std::istringstream ss(line);
+//
 		std::vector<Value> vec;
-		string word;
-		while (!ss.eof()) {
-			ss >> word;
-			vec.push_back(parseValue(word));
+//		string word;
+//		while (!ss.eof()) {
+//			ss >> word;
+//			vec.push_back(parseValue(word));
+//		}
+//		return vec;
+
+		auto words = lexer.tokenize(line);
+
+		for (auto &it: words) {
+			vec.push_back(parseValue(it));
 		}
+
 		return vec;
 	}
 
@@ -60,8 +75,8 @@ public:
 
 			printValue(ass.run(window).toString());
 		}
-		else if (first == "call") {
-			FunctionCall call(words[1], words[2]);
+		else if (words.size() == 4 && words[1].toString() == "(" && words[3].toString() == ")") {
+			FunctionCall call(words[0], words[2]);
 			call.run(window);
 		}
 		else if (first == "let" || first == "var") {
@@ -97,11 +112,23 @@ int main(int argc, char const *argv[])
 
 	SimpleInterpreter interpreter;
 
+	auto handleErrors = true;
+
 	while (!cin.eof()) {
 		cout << ">> ";
 		cout.flush();
 		string line;
 		getline(cin, line);
-		interpreter.interpret(line);
+		if (handleErrors) {
+			try {
+				interpreter.interpret(line);
+			}
+			catch (const char *e) {
+				cout << e << endl;
+			}
+		}
+		else {
+			interpreter.interpret(line);
+		}
 	}
 }
