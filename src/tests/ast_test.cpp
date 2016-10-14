@@ -20,13 +20,32 @@ TEST_CASE("simple ast test") {
 	ASSERT_EQ(unit[2].token, "test");
 }
 
+TEST_CASE("function test") {
+	{
+		AstUnit unit("function apa () { console.log('hej');} ");
+		ASSERT_EQ(unit.type, unit.Function);
+		ASSERT_EQ(unit[1].type, unit.DeclarationName);
+	}
+	{
+		AstUnit unit("x = function apa() {}");
+		unit.print(std::cout);
+
+		ASSERT_EQ(unit[2].type, unit.Function);
+	}
+}
+
+TEST_CASE("keyword test") {
+	AstUnit unit("function");
+
+	ASSERT_EQ(unit[0].type, AstUnit::FunctionKeyword);
+}
+
 TEST_CASE("simple group test") {
 	{
 		AstUnit unit("simple (group test)");
 
-//		unit.print(std::cout);
 
-		ASSERT(unit.size(), 2);
+		ASSERT_EQ(unit.size(), 2);
 		ASSERT_EQ(unit[0].size(), 0);
 		ASSERT_EQ(unit[1].size(), 2);
 	}

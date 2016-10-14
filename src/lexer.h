@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <array>
 
 class Token: public std::string {
 public:
@@ -96,6 +97,17 @@ public:
 				break;
 			case SimpleLexer::Paranthesis:
 				word.type = Token::Paranthesis;
+				if (word.size() > 1) {
+					std::string tmpWord = word;
+					for (size_t i = 0; i < tmpWord.size(); ++i) {
+						word.assign(tmpWord.substr(i, 1));
+						word.before = textBefore;
+						textBefore.clear();
+						returnValue.push_back(word);
+						word.clear();
+					}
+					return;
+				}
 				break;
 			case SimpleLexer::Space:
 				returnValue.back().after += textAfter;

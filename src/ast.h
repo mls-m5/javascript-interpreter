@@ -9,21 +9,51 @@
 
 #include "lexer.h"
 #include <memory>
+#include <map>
 
 
 typedef std::shared_ptr<class AstUnit> AstUnitPtr;
+
 
 class AstUnit: public std::enable_shared_from_this<AstUnit> {
 public:
 	enum Type {
 		None,
+		Any = None,
 		Word,
 		Digit,
 		Paranthesis,
 		Bracket,
 		Braces,
 		GenericGroup,
+		Function,
 		FunctionCall,
+		ForLoop,
+		DeclarationName,
+		Assignment,
+
+		Operator,
+		Left,
+		Right,
+
+		FunctionKeyword,
+		ForKeyword,
+//		abstract
+//		arguments
+//		boolean
+//		break	byte
+//		case	catch	char	class*	const
+//		continue	debugger	default	delete	do
+//		double	else	enum*	eval	export*
+//		extends*	false	final	finally	float
+//		goto	if	implements
+//		import*	in	instanceof	int	interface
+//		let	long	native	new	null
+//		package	private	protected	public	return
+//		short	static	super*	switch	synchronized
+//		this	throw	throws	transient	true
+//		try	typeof	var	void	volatile
+//		while	with	yield
 	};
 
 	AstUnit() {
@@ -31,11 +61,20 @@ public:
 
 	AstUnit(Token &token): token(token) {
 		switch (token.type) {
+		case token.Word:
+			type = Word;
+		break;
 		case token.Paranthesis:
 			type = Paranthesis;
-		break;
+		return;
+		}
+		auto t = getKeywordType(token);
+		if (t != None) {
+			type = t;
 		}
 	}
+
+	static Type getKeywordType(Token& token);
 
 	AstUnit(std::string text) {
 		SimpleLexer lexer;
@@ -52,6 +91,9 @@ public:
 			out << endToken;
 		}
 		out << "'";
+		if (type != None) {
+			out << " - " << type;
+		}
 		if (!children.empty()) {
 			out << ":";
 		}
@@ -60,6 +102,8 @@ public:
 			it->print(out, intent + 1);
 		}
 	}
+
+	void groupByPatterns();
 
 	void groupByParanthesis() {
 		//Todo implement
@@ -94,12 +138,25 @@ public:
 		}
 	}
 
+	AstUnit *group(size_t begin, size_t end, Type t) {
+		auto it1 = children.begin() + begin;
+		auto it2 = children.begin() + end;
+
+		auto unit = new AstUnit();
+		unit->type = t;
+		unit->children.insert(unit->children.begin(), it1, it2);
+		children.erase(it1, it2);
+		children.insert(it1, AstUnitPtr(unit));
+		return unit;
+	}
+
 	AstUnit &operator = (std::vector<Token> &tokens) {
 		for (auto &it: tokens) {
 			children.push_back(std::shared_ptr<AstUnit>(new AstUnit(it)));
 		}
 		type = GenericGroup;
 		groupByParanthesis();
+		groupByPatterns();
 		return *this;
 	}
 
@@ -135,7 +192,8 @@ public:
 	Token endToken;
 	Type type = None;
 	std::vector<AstUnitPtr> children;
+
+	//Defined here to skip prefix to enum values:
+	static std::vector<std::pair<std::vector<class PatternUnit>, Type> > patterns;
+	static std::map<std::string, Type> keywordMap;
 };
-
-
-

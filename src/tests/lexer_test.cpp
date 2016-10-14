@@ -31,6 +31,14 @@ TEST_CASE("character type test") {
 	ASSERT_EQ(lexer.getCharType('='), lexer.Operator);
 }
 
+TEST_CASE("paranthesis separation") {
+	SimpleLexer lexer;
+	auto tokens = lexer.tokenize("{}");
+	ASSERT_EQ(tokens.size(), 2);
+	ASSERT_EQ(tokens[0].type, Token::Paranthesis);
+	ASSERT_EQ(tokens[1].type, Token::Paranthesis);
+}
+
 TEST_CASE("more advanced tokenizer test") {
 	SimpleLexer lexer;
 
