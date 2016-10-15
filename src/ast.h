@@ -30,32 +30,35 @@ public:
 		Function,
 		Arguments,
 		FunctionCall,
+		NewStatement,
 		ForLoop,
 		DeclarationName,
 		Assignment,
+		Sequence,
+		Conditional,
 
 		Left,
 		Right,
-
-
-		BinaryOperator,
-
 
 		MemberAccess,
 		ComputedMemberAccess,
 		PostfixStatement,
 		PrefixStatement,
+		BinaryStatement,
+		DeleteStatement,
+		ExponentiationStatement,
 
 		Period,
 		NewKeyword, //18 with function call
 		Postfix, //17
 		Prefix, //16
-		Exponentiation, //15
-		Operators14, //Multiplication
+		DeleteKeyword, //16
+		ExponentiationOperator, //15
+		Operator14, //Multiplication division mod
 		AddSubtractOperators, //13
 		BitwiseShiftOperators, //12
 		Operator11, //< in .. etc
-		EqualityOperators, //10
+		EqualityOperator, //10
 		BitwiseAnd, //0
 		BitwiseXor, //8
 		BitwiseOr, //7
@@ -69,7 +72,6 @@ public:
 		Coma, //Precedence 0
 
 		FunctionKeyword,
-		DeleteKeyword,
 		ForKeyword,
 //		abstract
 //		arguments

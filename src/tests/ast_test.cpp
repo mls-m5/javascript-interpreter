@@ -42,13 +42,65 @@ TEST_CASE("keyword test") {
 	ASSERT_EQ(unit[0].type, AstUnit::FunctionKeyword);
 }
 
-TEST_CASE("operator test precence 19") {
+TEST_CASE("operator 19") {
+	{
+		AstUnit unit("new Apa (x)"); //New with arguments
+		ASSERT_EQ(unit.type, unit.NewStatement);
+	}
+}
+
+TEST_CASE("operator 18") {
+	{
+		AstUnit unit("apa ()");
+		ASSERT_EQ(unit.type, unit.FunctionCall);
+	}
+	{
+		AstUnit unit("new apa"); //New without arguments
+		ASSERT_EQ(unit.type, unit.NewStatement);
+	}
+}
+
+TEST_CASE("operator 17") {
+	{
+		AstUnit unit("x++");
+		ASSERT_EQ(unit.type, unit.PostfixStatement);
+	}
+}
+
+
+TEST_CASE("operator 16") {
+	{
+		AstUnit unit("typeof x");
+		ASSERT_EQ(unit.type, unit.PrefixStatement);
+	}
+
 	{
 		AstUnit unit("delete x");
-		unit.print(std::cout);
 		ASSERT_EQ(unit.type, unit.PrefixStatement);
 	}
 }
+
+
+TEST_CASE("operator 3-15 (binary + conditional)") {
+	std::vector<std::string> operators = {"**", "*", "+", "<<", "<", "==", "&", "|", "^", "&&", "||", "="};
+	for (auto op: operators){
+		AstUnit unit("apa " + op + " bepa");
+		ASSERT_EQ(unit.type, unit.BinaryStatement);
+	}
+	{
+		AstUnit unit("23? x: y");
+		ASSERT_EQ(unit.type, unit.Conditional);
+	}
+}
+
+TEST_CASE("operator 0 - Coma sequence") {
+	{
+		AstUnit unit("23? x: y");
+		ASSERT_EQ(unit.type, unit.Conditional);
+	}
+}
+
+
 
 TEST_CASE("simple group test") {
 	{
@@ -73,8 +125,6 @@ TEST_CASE("simple group test") {
 
 	{
 		AstUnit unit("simple [group test]");
-
-//		unit.print(std::cout);
 
 		ASSERT(unit.size(), 2);
 		ASSERT_EQ(unit[0].size(), 0);

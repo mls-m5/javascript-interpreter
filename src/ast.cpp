@@ -60,8 +60,24 @@ public:
 vector<pair<set<string>, Type>> AstUnit::keywordMap {
 	{{"for"}, ForKeyword},
 	{{"function"}, FunctionKeyword},
-	{{"delete"}, Prefix},
-	{{"=", "+=", "-=", "**=", "*=", "/=", "%=", "<<=", ">>=", ">>>=", "&=", "^=", "!="}, AssignmentOperator}
+	{{"new"}, NewKeyword},
+	{{"++", "--"}, Postfix}, //How to separate prefix from the postfix
+	{{"delete", "typeof", "void", "!"}, Prefix},
+	{{"**"}, ExponentiationOperator},
+	{{"*", "/", "%"}, ExponentiationOperator},
+	{{"+", "-"}, AddSubtractOperators},
+	{{"<<", ">>"}, BitwiseShiftOperators},
+	{{"<", "<=", ">", ">=", "in", "instanceof"}, Operator11},
+	{{"==", "!=", "===", "!=="}, EqualityOperator},
+	{{"&"}, BitwiseAnd},
+	{{"^"}, BitwiseXor},
+	{{"|"}, BitwiseOr},
+	{{"&&"}, And},
+	{{"||"}, Or},
+	{{"?"}, QuestionMark},
+	{{":"}, Colon},
+	{{"=", "+=", "-=", "**=", "*=", "/=", "%=", "<<=", ">>=", ">>>=", "&=", "^=", "!="}, AssignmentOperator},
+	{{","}, Coma},
 };
 
 
@@ -76,12 +92,25 @@ vector<PatternRule> AstUnit::patterns = {
 
 	{{Any, Period, Any}, MemberAccess}, //19
 	{{Any, Bracket}, MemberAccess}, //19
-	{{NewKeyword, Any, {Paranthesis, Arguments}}, FunctionCall}, //19: new with arguments
+	{{NewKeyword, Any, {Paranthesis, Arguments}}, NewStatement}, //19: new with arguments
 	{{Word, Paranthesis}, FunctionCall}, //Precence 18
-	{{NewKeyword, Any}, FunctionCall}, //Precence also 18
+	{{NewKeyword, Any}, NewStatement}, //Precence also 18
 	{{Any, Postfix}, PostfixStatement}, //Precedence 17
 	{{Prefix, Any}, PrefixStatement, PatternRule::RightToLeft}, //Precence 16
-	{{{Any}, AssignmentOperator, Any}, BinaryOperator}, //Replace this by more generic BinaryOperator type instead of string
+	{{Any, ExponentiationOperator, Any}, BinaryStatement}, //15
+	{{Any, Operator14, Any}, BinaryStatement}, //14
+	{{Any, AddSubtractOperators, Any}, BinaryStatement}, //13
+	{{Any, BitwiseShiftOperators, Any}, BinaryStatement}, //12
+	{{Any, Operator11, Any}, BinaryStatement}, //11
+	{{Any, EqualityOperator, Any}, BinaryStatement}, //10
+	{{Any, BitwiseAnd, Any}, BinaryStatement}, //9
+	{{Any, BitwiseXor, Any}, BinaryStatement}, //8
+	{{Any, BitwiseOr, Any}, BinaryStatement}, //7
+	{{Any, And, Any}, BinaryStatement}, //6
+	{{Any, Or, Any}, BinaryStatement}, //5
+	{{Any, QuestionMark, Any, Colon, Any}, Conditional, PatternRule::RightToLeft}, //4
+	{{Any, AssignmentOperator, Any}, BinaryStatement, PatternRule::RightToLeft}, //3
+	{{Any, Coma, Any}, Sequence}, //3
 };
 
 AstUnit::Type AstUnit::getKeywordType(Token& token) {
