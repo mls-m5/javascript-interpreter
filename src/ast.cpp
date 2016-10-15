@@ -41,13 +41,14 @@ public:
 };
 
 
-
+//Check this
+//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
 vector<pair<vector<PatternUnit>, Type> > AstUnit::patterns = {
-	{{FunctionKeyword, {Word, DeclarationName}, Paranthesis, Braces}, Function},
-	{{FunctionKeyword, Paranthesis, Braces}, Function},
+	{{FunctionKeyword, {Word, DeclarationName}, {Paranthesis, Arguments}, Braces}, Function},
+	{{FunctionKeyword, {Paranthesis, Arguments}, Braces}, Function},
 	{{Word, Paranthesis}, FunctionCall},
 	{{ForKeyword, Braces}, ForLoop},
-	{{{Any}, "=", {Any}}, Assignment},
+	{{{Any}, "=", {Any}}, Assignment}, //Replace this by more generic BinaryOperator type instead of string
 };
 
 map<string, Type> AstUnit::keywordMap = {
@@ -68,15 +69,7 @@ AstUnit::Type AstUnit::getKeywordType(Token& token) {
 void AstUnit::groupByPatterns() {
 	for (size_t pi = 0; pi < patterns.size(); ++pi) {
 		auto &pattern = patterns[pi].first;
-		//Om size_t blir mindre än 0 så blir det talet i andra änden av skalan
-		//Se till att det inte blir mindre än noll (ta kanske bort -1
-		if (pattern.size() > children.size()) {
-			continue;
-		}
-		for (size_t offset = 0; offset <= children.size() - pattern.size(); ++offset) {
-			if (pattern.size() > children.size()) {
-				break;
-			}
+		for (size_t offset = 0; offset <= children.size() - pattern.size() && pattern.size() <= children.size(); ++offset) {
 			bool match = true;
 			for (size_t i = 0; i < pattern.size(); ++i) {
 				if (!(pattern[i] == *children[i + offset])) {

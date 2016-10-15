@@ -12,30 +12,7 @@
 #include <string>
 #include <sstream>
 #include <array>
-
-class Token: public std::string {
-public:
-	enum Type {
-		Word,
-		Operator,
-		Paranthesis,
-		Number,
-		PropertyAccessor,
-	};
-
-	void clear() {
-		std::string::clear();
-		before.clear();
-		after.clear();
-	}
-
-	std::string before;
-	std::string after;
-	int line;
-	int row;
-	Type type;
-
-};
+#include "token.h"
 
 class Lexer {
 public:

@@ -120,7 +120,8 @@ class FunctionDeclaration: public Statement {
 public:
 	CodeBlock block;
 
-	Identifier identifier;
+//	Identifier identifier;
+	Token name;
 	~FunctionDeclaration() {}
 
 	//Do special difference except the arguments

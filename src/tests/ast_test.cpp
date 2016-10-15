@@ -30,7 +30,10 @@ TEST_CASE("function test") {
 		AstUnit unit("x = function apa() {}");
 		unit.print(std::cout);
 
-		ASSERT_EQ(unit[2].type, unit.Function);
+		auto f = unit.getByType(unit.Function);
+		ASSERT(f, "no function found");
+		auto a = f->getByType(unit.Arguments);
+		ASSERT(a, "no arguments found");
 	}
 }
 

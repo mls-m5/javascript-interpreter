@@ -15,7 +15,7 @@ class SimpleInterpreter {
 public:
 	SimpleLexer lexer;
 
-	static Value parseValue(string word) {
+	static Value parseValue(Token word) {
 		if (word[0] == '\"') {
 			return Value(word.substr(1, word.size() - 2));
 		}

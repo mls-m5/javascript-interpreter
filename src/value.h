@@ -10,6 +10,7 @@
 #include <string>
 #include <memory>
 #include <sstream>
+#include "token.h"
 using namespace std;
 
 class Value {
@@ -305,6 +306,8 @@ public:
 	}
 };
 
+typedef std::shared_ptr<Statement> StatementPointer;
+
 
 class Identifier: public Statement{
 public:
@@ -312,9 +315,9 @@ public:
 	Identifier(const Identifier&) = default;
 	Identifier(Identifier &&) = default;
 	//If createNew is true a variable is created if it does not exist
-	Identifier(string name, bool createNew = false) : name(name), createNew(createNew) {};
+	Identifier(Token name, bool createNew = false) : name(name), createNew(createNew) {};
 	Identifier(const char name[]) : name(name) {};
-	string name;
+	Token name;
 	bool createNew = false;
 
 	Value run(ObjectValue& context) override {

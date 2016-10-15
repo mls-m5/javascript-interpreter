@@ -26,7 +26,9 @@ public:
 		Bracket,
 		Braces,
 		GenericGroup,
+
 		Function,
+		Arguments,
 		FunctionCall,
 		ForLoop,
 		DeclarationName,
@@ -136,6 +138,16 @@ public:
 				}
 			}
 		}
+	}
+
+	//Get a child unit by type
+	AstUnit *getByType(Type type) {
+		for (auto &it: children) {
+			if (it->type == type) {
+				return &*it;
+			}
+		}
+		return nullptr;
 	}
 
 	AstUnit *group(size_t begin, size_t end, Type t) {
