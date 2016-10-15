@@ -40,30 +40,64 @@ public:
 	}
 };
 
+class PatternRule: public pair<vector<PatternUnit>, Type> {
+public:
+	enum Associativity {
+		LeftToRight,
+		RightToLeft,
+		None,
+	};
 
-//Check this
-//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
-vector<pair<vector<PatternUnit>, Type> > AstUnit::patterns = {
-	{{FunctionKeyword, {Word, DeclarationName}, {Paranthesis, Arguments}, Braces}, Function},
-	{{FunctionKeyword, {Paranthesis, Arguments}, Braces}, Function},
-	{{Word, Paranthesis}, FunctionCall},
-	{{ForKeyword, Braces}, ForLoop},
-	{{{Any}, "=", {Any}}, Assignment}, //Replace this by more generic BinaryOperator type instead of string
+	PatternRule(vector<PatternUnit> pattern, Type type, Associativity associativity = LeftToRight): associativity(associativity) {
+		first = pattern;
+		second = type;
+	}
+
+	Associativity associativity;
 };
 
-map<string, Type> AstUnit::keywordMap = {
-	{"function", FunctionKeyword},
-	{"for", ForKeyword},
+
+vector<pair<set<string>, Type>> AstUnit::keywordMap {
+	{{"for"}, ForKeyword},
+	{{"function"}, FunctionKeyword},
+	{{"delete"}, Prefix},
+	{{"=", "+=", "-=", "**=", "*=", "/=", "%=", "<<=", ">>=", ">>>=", "&=", "^=", "!="}, AssignmentOperator}
+};
+
+
+//Rules is taken from the description at:
+//https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
+
+//Defines the way lots of the expressions is grouped
+vector<PatternRule> AstUnit::patterns = {
+	{{FunctionKeyword, {Word, DeclarationName}, {Paranthesis, Arguments}, Braces}, Function},
+	{{FunctionKeyword, {Paranthesis, Arguments}, Braces}, Function},
+	{{ForKeyword, Paranthesis, Braces}, ForLoop},
+
+	{{Any, Period, Any}, MemberAccess}, //19
+	{{Any, Bracket}, MemberAccess}, //19
+	{{NewKeyword, Any, {Paranthesis, Arguments}}, FunctionCall}, //19: new with arguments
+	{{Word, Paranthesis}, FunctionCall}, //Precence 18
+	{{NewKeyword, Any}, FunctionCall}, //Precence also 18
+	{{Any, Postfix}, PostfixStatement}, //Precedence 17
+	{{Prefix, Any}, PrefixStatement, PatternRule::RightToLeft}, //Precence 16
+	{{{Any}, AssignmentOperator, Any}, BinaryOperator}, //Replace this by more generic BinaryOperator type instead of string
 };
 
 AstUnit::Type AstUnit::getKeywordType(Token& token) {
-	auto f = keywordMap.find(token);
-	if (f == keywordMap.end()) {
-		return Type::None;
+	for (auto &it: keywordMap) {
+		if (it.first.find(token) != it.first.end()) {
+			return it.second;
+		}
 	}
-	else {
-		return f->second;
-	}
+	return Type::None;
+//	auto f = keywordMap.find(token);
+//	if (f == keywordMap.end()) {
+//		return Type::None;
+//	}
+//	else {
+//		return f->second;
+//	}
 }
 
 void AstUnit::groupByPatterns() {

@@ -287,6 +287,8 @@ public:
 	std::string value;
 };
 
+typedef std::shared_ptr<Statement> StatementPointer;
+
 class Statement{
 public:
 	virtual ~Statement() {}
@@ -306,7 +308,6 @@ public:
 	}
 };
 
-typedef std::shared_ptr<Statement> StatementPointer;
 
 
 class Identifier: public Statement{

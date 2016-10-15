@@ -28,7 +28,6 @@ TEST_CASE("function test") {
 	}
 	{
 		AstUnit unit("x = function apa() {}");
-		unit.print(std::cout);
 
 		auto f = unit.getByType(unit.Function);
 		ASSERT(f, "no function found");
@@ -41,6 +40,14 @@ TEST_CASE("keyword test") {
 	AstUnit unit("function");
 
 	ASSERT_EQ(unit[0].type, AstUnit::FunctionKeyword);
+}
+
+TEST_CASE("operator test precence 19") {
+	{
+		AstUnit unit("delete x");
+		unit.print(std::cout);
+		ASSERT_EQ(unit.type, unit.PrefixStatement);
+	}
 }
 
 TEST_CASE("simple group test") {

@@ -10,7 +10,7 @@
 #include "lexer.h"
 #include <memory>
 #include <map>
-
+#include <set>
 
 typedef std::shared_ptr<class AstUnit> AstUnitPtr;
 
@@ -34,11 +34,42 @@ public:
 		DeclarationName,
 		Assignment,
 
-		Operator,
 		Left,
 		Right,
 
+
+		BinaryOperator,
+
+
+		MemberAccess,
+		ComputedMemberAccess,
+		PostfixStatement,
+		PrefixStatement,
+
+		Period,
+		NewKeyword, //18 with function call
+		Postfix, //17
+		Prefix, //16
+		Exponentiation, //15
+		Operators14, //Multiplication
+		AddSubtractOperators, //13
+		BitwiseShiftOperators, //12
+		Operator11, //< in .. etc
+		EqualityOperators, //10
+		BitwiseAnd, //0
+		BitwiseXor, //8
+		BitwiseOr, //7
+		And, //6
+		Or, //5
+		QuestionMark, //
+		Colon,
+		AssignmentOperator, //Precedence 3
+		//Yield: 2
+		//Spread: Precedence 1
+		Coma, //Precedence 0
+
 		FunctionKeyword,
+		DeleteKeyword,
 		ForKeyword,
 //		abstract
 //		arguments
@@ -206,6 +237,6 @@ public:
 	std::vector<AstUnitPtr> children;
 
 	//Defined here to skip prefix to enum values:
-	static std::vector<std::pair<std::vector<class PatternUnit>, Type> > patterns;
-	static std::map<std::string, Type> keywordMap;
+	static std::vector<std::pair<std::set<std::string>, Type>> keywordMap;
+	static std::vector<class PatternRule > patterns;
 };
