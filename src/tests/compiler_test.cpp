@@ -23,11 +23,12 @@ TEST_CASE("Simple conversion test") {
 		ASSERT_EQ(f->name, "apa");
 	}
 	{
-		auto statement = compiler.compile("apa()");
+		auto statement = compiler.compile("apa(x, y, z)");
 
 		auto call = dynamic_cast<FunctionCall*> (statement.get());
 
 		ASSERT(call, "statement is not a function call");
+		ASSERT(call->arguments.statements.size(), 3);
 
 //		ASSERT_EQ(call->identifier.toString(), apa);
 	}

@@ -9,6 +9,7 @@
 
 #include "ast.h"
 #include "virtualmachine.h"
+#include <functional>
 
 class Compiler {
 public:
@@ -24,6 +25,9 @@ public:
 		case unit.Word:
 			statement = new LiteralStatement(unit.token);
 		break;
+		case unit.String:
+			statement = new StringLiteralStatement(unit.token);
+		break;
 		case unit.Function:
 		{
 			auto f = new FunctionDeclaration();
@@ -36,6 +40,13 @@ public:
 		break;
 		case unit.Arguments:
 		{
+			auto s = new ArgumentStatement();
+
+			if (!unit.empty()) {
+				cumulate(unit[0], s->statements);
+			}
+
+			statement = s;
 
 		}
 		break;
@@ -43,20 +54,13 @@ public:
 		{
 			auto fc = new FunctionCall();
 
-			if (auto argumentUnit = &*unit.children[1]) {
-				auto arguments = new ArgumentStatement();
-				if (argumentUnit->type == unit.Arguments) {
-					arguments->statements.push_back(StatementPointer(compile(*argumentUnit)));
-				}
-				else {
-					throw "multiple arguments not implemented";
-				}
-				fc->arguments = StatementPointer(arguments);
-
-//				fc->arguments = StatementPointer(&arguments);
-			}
-			if (auto name = &*unit.children[0]) {
+			if (auto name = unit.children[0].get()) {
 				fc->identifier = StatementPointer(compile(*name));
+			}
+			if (auto argumentUnit = unit.getByType(unit.Arguments)) {
+				if (!unit.empty()) {
+					cumulate(*argumentUnit->children[0].get(), fc->arguments.statements);
+				}
 			}
 
 			statement = fc;
@@ -65,10 +69,25 @@ public:
 		break;
 		}
 		if (statement == nullptr) {
-			throw "statement could not be compiled";
+//			throw "statement could not be compiled";
 		}
 		return StatementPointer(statement);
 	}
+
+private:
+	void cumulate(AstUnit &unit, vector<shared_ptr<Statement>> &statements) {
+		if (unit.type == AstUnit::Sequence) {
+			auto first = unit[0];
+			auto second = unit[2];
+
+			cumulate(first, statements);
+
+			statements.push_back(compile(second));
+		}
+		else {
+			statements.push_back(compile(unit));
+		}
+	};
 
 };
 

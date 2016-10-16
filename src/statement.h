@@ -44,15 +44,37 @@ public:
 	}
 
 	Value run(ObjectValue &context) override {
-		return value;
+		return context.getVariable(value);
 	}
 
 	Token value;
 };
 
+class StringLiteralStatement: public LiteralStatement {
+public:
+	StringLiteralStatement(const Token &value): LiteralStatement(value) {}
+
+	Value run(ObjectValue &context) override {
+		return value;
+	}
+
+};
+
 class ArgumentStatement: public Statement {
 public:
 	vector<StatementPointer> statements;
+
+	Value run(ObjectValue &context) override {
+		auto array = new ObjectValue();
+
+		for (int i = 0; i < statements.size(); ++i) {
+			ostringstream ss;
+			ss << i;
+			array->setVariable(ss.str(), statements[i]->run(context));
+		}
+
+		return Value(*array);
+	}
 };
 
 

@@ -21,7 +21,13 @@ public:
 static class ConsoleLog: public NativeFunction {
 	Value run(ObjectValue &context) override {
 		auto arguments = context.getVariable("arguments", false);
-		cout << arguments.run(context).toString() << endl;
+		if (arguments.type != arguments.Undefined) {
+			cout << arguments.getObject()->getVariable("0").run(context).toString() << endl;
+		}
+		else {
+			throw "no arguments to console log";
+		}
+//		cout << arguments.run(context).toString() << endl;
 		return UndefinedValue;
 	}
 

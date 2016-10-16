@@ -89,7 +89,8 @@ TEST_CASE("function call") {
 
 		Value run(ObjectValue &context) override {
 			isCalled = true;
-			argument = context.getVariable("arguments").toString();
+			auto arguments = context.getVariable("arguments");
+			argument = arguments.getObject()->getVariable("0").toString();
 			return Value();
 		}
 	};
@@ -122,8 +123,6 @@ TEST_CASE("identifier test") {
 	auto ret = identifier.run(window);
 
 	ASSERT_EQ(ret.toString(), "hej");
-
-
 
 	window.deleteVariable("apa");
 	runGarbageCollection();

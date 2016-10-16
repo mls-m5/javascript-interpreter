@@ -31,6 +31,16 @@ TEST_CASE("character type test") {
 	ASSERT_EQ(lexer.getCharType('='), lexer.Operator);
 }
 
+TEST_CASE("string literal test") {
+	SimpleLexer lexer;
+	auto tokens = lexer.tokenize("('hej')\"då\"");
+	ASSERT_EQ(tokens.size(), 4);
+	ASSERT_EQ(tokens[0].type, Token::Paranthesis);
+	ASSERT_EQ(tokens[1].type, Token::StringLiteral);
+	ASSERT_EQ(tokens[2].type, Token::Paranthesis);
+	ASSERT_EQ(tokens[3].type, Token::StringLiteral);
+}
+
 TEST_CASE("paranthesis separation") {
 	SimpleLexer lexer;
 	auto tokens = lexer.tokenize("{}");

@@ -112,7 +112,7 @@ vector<PatternRule> AstUnit::patterns = {
 	{{Any, Period, Any}, MemberAccess}, //19
 	{{Any, Bracket}, MemberAccess}, //19
 	{{NewKeyword, Any, {Paranthesis, Arguments}}, NewStatement}, //19: new with arguments
-	{{Word, {Paranthesis, Arguments}}, FunctionCall}, //Precence 18
+	{{Any, {Paranthesis, Arguments}}, FunctionCall}, //Precence 18
 	{{NewKeyword, Any}, NewStatement}, //Precence also 18
 	{{Any, Postfix}, PostfixStatement}, //Precedence 17
 	{{Prefix, Any}, PrefixStatement, PatternRule::RightToLeft}, //Precence 16

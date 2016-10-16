@@ -38,6 +38,8 @@ TEST_CASE("function test") {
 	{
 		AstUnit unit("apa (x, y, z)");
 
+		unit.print(std::cout);
+
 		ASSERT_EQ(unit.size(), 2);
 		ASSERT_EQ(unit[1].type, unit.Arguments);
 		ASSERT_EQ(unit[1][0].type, unit.Sequence);

@@ -18,6 +18,7 @@ public:
 		Paranthesis,
 		Number,
 		PropertyAccessor,
+		StringLiteral,
 	};
 
 	Token() = default;

@@ -30,6 +30,7 @@ public:
 		Paranthesis,
 		Digit,
 		Period,
+		Citation,
 	};
 
 	CharacterType getCharType(char c) {
@@ -51,6 +52,7 @@ public:
 		setCharacterType("[](){}", Paranthesis);
 		setCharacterType(" \n	", Space);
 		setCharacterType("0123456789", Digit);
+		setCharacterType("\"'", Citation);
 		setCharacterType(".", Period);
 	}
 
@@ -71,6 +73,9 @@ public:
 				break;
 			case SimpleLexer::Operator:
 				word.type = Token::Operator;
+				break;
+			case SimpleLexer::Citation:
+				word.type = Token::StringLiteral;
 				break;
 			case SimpleLexer::Paranthesis:
 				word.type = Token::Paranthesis;
@@ -121,6 +126,15 @@ public:
 			word.clear();
 		};
 
+		auto getCitation = [&word, &c, &ss] (char startSign) {
+			ss.get(c);
+			while(!ss.eof() && c != startSign) {
+				//Todo: fix and test more
+				word += c;
+				ss.get(c);
+			}
+		};
+
 		while (!ss.eof()) {
 			auto ct = getCharType(c);
 			if (ct != charType && !word.empty()) {
@@ -131,6 +145,13 @@ public:
 				else {
 					pushWord();
 				}
+			}
+			if (ct == Citation) {
+				getCitation(c);
+				charType = SimpleLexer::Citation;
+				pushWord();
+				ss.get(c);
+				continue;
 			}
 			word += c;
 			charType = ct;

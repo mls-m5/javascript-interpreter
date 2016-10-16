@@ -141,20 +141,20 @@ public:
 //	identifier(identifier), arguments(arguments){}
 
 	StatementPointer identifier;
-	StatementPointer arguments;
+	ArgumentStatement arguments;
 
 	//Todo make it possible to send arguments
 	Value run(ObjectValue &context) override {
-		auto id = identifier->run(context).getValue();//context.getVariable(identifier);
-		auto functionValue = context.getVariable(id.toString());
+		auto functionValue = identifier->run(context).getValue();//context.getVariable(identifier);
+//		auto functionValue =  context.getVariable(id.toString());
 
 		if (functionValue.type != Value::Undefined) {
-			if (arguments) {
-				auto args = arguments->run(context);
-				return functionValue.call(context, args);
+			if (arguments.statements.empty()) {
+				return functionValue.call(context, UndefinedValue);
 			}
 			else {
-				return functionValue.call(context, UndefinedValue);
+				auto args = arguments.run(context);
+				return functionValue.call(context, args);
 			}
 		}
 		else {

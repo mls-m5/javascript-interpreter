@@ -22,6 +22,7 @@ public:
 		Any = None,
 		Word,
 		Digit,
+		String,
 		Paranthesis,
 		Bracket,
 		Braces,
@@ -33,6 +34,7 @@ public:
 		NewStatement,
 		ForLoop,
 		DeclarationName,
+		Name,
 		Assignment,
 		Sequence,
 		Conditional,
@@ -98,6 +100,9 @@ public:
 		switch (token.type) {
 		case token.Word:
 			type = Word;
+		break;
+		case token.StringLiteral:
+			type = String;
 		break;
 		case token.Paranthesis:
 			type = Paranthesis;
@@ -226,6 +231,10 @@ public:
 
 	AstUnit &operator [] (size_t index) {
 		return *children[index];
+	}
+
+	bool empty() {
+		return children.empty();
 	}
 
 	size_t size() {
