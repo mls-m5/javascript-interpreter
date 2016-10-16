@@ -200,9 +200,16 @@ public:
 			children.push_back(std::shared_ptr<AstUnit>(new AstUnit(it)));
 		}
 		type = GenericGroup;
+		groupUnit();
+		return *this;
+	}
+
+	void groupUnit() {
+		if (children.empty()) {
+			return;
+		}
 		groupByParanthesis();
 		groupByPatterns();
-		return *this;
 	}
 
 	AstUnit(std::vector<Token> &tokens) {

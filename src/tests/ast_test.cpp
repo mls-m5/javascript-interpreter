@@ -34,6 +34,22 @@ TEST_CASE("function test") {
 		auto a = f->getByType(unit.Arguments);
 		ASSERT(a, "no arguments found");
 	}
+
+	{
+		AstUnit unit("apa (x, y, z)");
+
+		ASSERT_EQ(unit.size(), 2);
+		ASSERT_EQ(unit[1].type, unit.Arguments);
+		ASSERT_EQ(unit[1][0].type, unit.Sequence);
+	}
+}
+
+TEST_CASE("multiple binary test") {
+	AstUnit unit("x * y * z");
+
+	ASSERT_EQ(unit.type, unit.BinaryStatement);
+	ASSERT_EQ(unit.size(), 3);
+	ASSERT_EQ(unit[0].type, unit.BinaryStatement);
 }
 
 TEST_CASE("keyword test") {

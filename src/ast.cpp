@@ -12,18 +12,33 @@ using namespace std;
 
 typedef AstUnit::Type Type;
 
+enum GroupingAction {
+	GroupStandard,
+	GroupExtra,
+};
+
 //A class for matching to different types of tokens
 class PatternUnit {
 public:
 	Type type = AstUnit::None;
 	Type target = AstUnit::None;
 	string name;
+	GroupingAction group = GroupStandard;
 
 	PatternUnit() = default;
-	PatternUnit(const char *name, AstUnit::Type target = Type::None): name(name), target(target) {}
-	PatternUnit(const string name, AstUnit::Type target = Type::None): name(name), target(target) {}
+	PatternUnit(const char *name, AstUnit::Type target = Type::None, GroupingAction groupingAction = GroupStandard):
+		name(name),
+		target(target),
+		group(groupingAction){}
+	PatternUnit(const string name, AstUnit::Type target = Type::None, GroupingAction groupingAction = GroupStandard):
+		name(name),
+		target(target),
+		group(groupingAction){}
 	PatternUnit(AstUnit::Type type): type(type), target(type) {}
-	PatternUnit(AstUnit::Type type, AstUnit::Type target): type(type), target(target) {}
+	PatternUnit(AstUnit::Type type, AstUnit::Type target, GroupingAction groupingAction = GroupStandard):
+		type(type),
+		target(target),
+		group(groupingAction){}
 
 	bool operator == (AstUnit& unit) {
 		if (type) {
@@ -38,6 +53,7 @@ public:
 		}
 		return true;
 	}
+
 };
 
 class PatternRule: public pair<vector<PatternUnit>, Type> {
@@ -48,12 +64,15 @@ public:
 		None,
 	};
 
-	PatternRule(vector<PatternUnit> pattern, Type type, Associativity associativity = LeftToRight): associativity(associativity) {
+	PatternRule(vector<PatternUnit> pattern, Type type, Associativity associativity = LeftToRight, GroupingAction groupAction = GroupStandard):
+		associativity(associativity),
+		group(groupAction){
 		first = pattern;
 		second = type;
 	}
 
 	Associativity associativity;
+	GroupingAction group = GroupStandard;
 };
 
 
@@ -93,7 +112,7 @@ vector<PatternRule> AstUnit::patterns = {
 	{{Any, Period, Any}, MemberAccess}, //19
 	{{Any, Bracket}, MemberAccess}, //19
 	{{NewKeyword, Any, {Paranthesis, Arguments}}, NewStatement}, //19: new with arguments
-	{{Word, Paranthesis}, FunctionCall}, //Precence 18
+	{{Word, {Paranthesis, Arguments}}, FunctionCall}, //Precence 18
 	{{NewKeyword, Any}, NewStatement}, //Precence also 18
 	{{Any, Postfix}, PostfixStatement}, //Precedence 17
 	{{Prefix, Any}, PrefixStatement, PatternRule::RightToLeft}, //Precence 16
@@ -110,7 +129,7 @@ vector<PatternRule> AstUnit::patterns = {
 	{{Any, Or, Any}, BinaryStatement}, //5
 	{{Any, QuestionMark, Any, Colon, Any}, Conditional, PatternRule::RightToLeft}, //4
 	{{Any, AssignmentOperator, Any}, BinaryStatement, PatternRule::RightToLeft}, //3
-	{{Any, Coma, Any}, Sequence}, //3
+	{{Any, Coma, Any}, Sequence, PatternRule::LeftToRight, GroupExtra}, //3
 };
 
 AstUnit::Type AstUnit::getKeywordType(Token& token) {
@@ -120,13 +139,6 @@ AstUnit::Type AstUnit::getKeywordType(Token& token) {
 		}
 	}
 	return Type::None;
-//	auto f = keywordMap.find(token);
-//	if (f == keywordMap.end()) {
-//		return Type::None;
-//	}
-//	else {
-//		return f->second;
-//	}
 }
 
 void AstUnit::groupByPatterns() {
@@ -142,13 +154,21 @@ void AstUnit::groupByPatterns() {
 			}
 
 			if (match) {
-				if (offset == 0 && pattern.size() == children.size()) {
-					type = patterns[pi].second;
+				if ((offset == 0 && pattern.size() == children.size()) && patterns[pi].group == GroupStandard) {
+					auto newPattern = patterns[pi].second;
+
+					if (newPattern == type) {
+						//Prevent the algorithm from doing the same thing twice
+						continue;
+					}
+					type = newPattern;
 
 					for (auto i = 0; i < pattern.size(); ++i) {
 						auto target = pattern[i].target;
 						if (target) {
-							(*this)[offset + i].type = target;
+							auto &unit = (*this)[offset + i];
+							unit.type = target;
+							unit.groupUnit();
 						}
 					}
 				}
@@ -157,11 +177,24 @@ void AstUnit::groupByPatterns() {
 
 					for (auto i = 0; i < pattern.size(); ++i) {
 						auto target = pattern[i].target;
+						auto groupAction = pattern[i].group;
 						if (target) {
-							unit->children[i]->type = pattern[i].target;
+							if (groupAction == GroupExtra) {
+								//Encapsulate the unit in a new Ast unit to save their types
+								auto tmpChild = unit->children[i];
+								auto newChild = AstUnitPtr(new AstUnit());
+								newChild->type = pattern[i].target;
+								newChild->children.push_back(tmpChild);
+								unit->children[i] = newChild;
+							}
+							else {
+								unit->children[i]->type = pattern[i].target;
+								unit->children[i]->groupUnit();
+							}
 						}
 					}
 				}
+			offset -= 1;
 			}
 		}
 	}

@@ -287,28 +287,7 @@ public:
 	std::string value;
 };
 
-typedef std::shared_ptr<Statement> StatementPointer;
-
-class Statement{
-public:
-	virtual ~Statement() {}
-	virtual Value run(ObjectValue &context) {
-		throw "abstract class statement called";
-	}
-
-	virtual string toString() {
-		return "statement";
-	}
-
-	Value call(ObjectValue &context, Value &expression) {
-		ObjectValue localContext;
-		localContext.parent = &context;
-		localContext.defineVariable("arguments", expression);
-		return this->run(localContext);
-	}
-};
-
-
+#include "statement.h"
 
 class Identifier: public Statement{
 public:
@@ -330,20 +309,6 @@ public:
 
 	//Todo: Add member functions and stuff
 	//Todo add posibility to use fixed place in memory
-};
-
-class Operator: public Statement{
-	Operator(string value): value(value) {}
-
-	Value run(ObjectValue &context) override {
-		throw "operator not callable";
-	}
-
-	string toString() override {
-		return value;
-	}
-
-	string value;
 };
 
 

@@ -8,6 +8,7 @@
 
 #include "unittest.h"
 #include "../virtualmachine.h"
+#include "../compiler.h"
 
 TEST_SUIT_BEGIN
 
@@ -84,27 +85,29 @@ TEST_CASE("function call") {
 	public:
 		~TestFunction() {}
 		bool isCalled = false;
+		string argument = "";
 
 		Value run(ObjectValue &context) override {
 			isCalled = true;
+			argument = context.getVariable("arguments").toString();
 			return Value();
 		}
 	};
 
 	TestFunction function;
+	Compiler compiler;
 	window.setVariable("apa", function);
 
-	Identifier id("apa");
+	auto functionCall = StatementPointer(compiler.compile("apa(\"hej\")"));
 
-	FunctionCall functionCall(id);
-
-	functionCall.run(window);
+	functionCall->run(window);
 
 	auto newExpression = window.getVariable("apa", false);
 	auto newFunction = dynamic_cast<TestFunction*>(newExpression.getStatement());
 
 	ASSERT(newFunction, "function pointer is null");
 	ASSERT(newFunction->isCalled, "Function is not called");
+	ASSERT_EQ(newFunction->argument, "hej");
 
 	window.deleteVariable("apa");
 

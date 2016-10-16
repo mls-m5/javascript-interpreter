@@ -135,20 +135,27 @@ public:
 	~FunctionCall() {}
 	FunctionCall() = default;
 	FunctionCall(const FunctionCall &) = default;
-	FunctionCall(Value identifier):
+	FunctionCall(StatementPointer identifier):
 		identifier(identifier) {}
-	FunctionCall(Value identifier, Value arguments):
-	identifier(identifier), arguments(arguments){}
+//	FunctionCall(StatementPointer identifier, Value arguments):
+//	identifier(identifier), arguments(arguments){}
 
-	Value identifier;
-	Value arguments;
+	StatementPointer identifier;
+	StatementPointer arguments;
 
 	//Todo make it possible to send arguments
 	Value run(ObjectValue &context) override {
-		auto functionValue = identifier.run(context).getValue();//context.getVariable(identifier);
+		auto id = identifier->run(context).getValue();//context.getVariable(identifier);
+		auto functionValue = context.getVariable(id.toString());
 
 		if (functionValue.type != Value::Undefined) {
-			return functionValue.call(context, arguments);
+			if (arguments) {
+				auto args = arguments->run(context);
+				return functionValue.call(context, args);
+			}
+			else {
+				return functionValue.call(context, UndefinedValue);
+			}
 		}
 		else {
 			throw "not a function";

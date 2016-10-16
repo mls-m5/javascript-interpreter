@@ -29,7 +29,7 @@ TEST_CASE("Simple conversion test") {
 
 		ASSERT(call, "statement is not a function call");
 
-//		ASSERT_EQ(call->identifier);
+//		ASSERT_EQ(call->identifier.toString(), apa);
 	}
 }
 
