@@ -104,8 +104,6 @@ int main(int argc, char const *argv[])
 	cout << "mjavascript 0.0003" << endl;
 
 //	SimpleInterpreter interpreter;
-	Compiler compiler;
-
 	auto handleErrors = true;
 
 	while (!cin.eof()) {
@@ -116,8 +114,8 @@ int main(int argc, char const *argv[])
 		if (handleErrors) {
 			try {
 //				interpreter.interpret(line);
-				auto statement = compiler.compile(line);
-				statement->run(window);
+				auto statement = Compiler::compile(line);
+				cout << statement->run(window).toString() << endl;
 			}
 			catch (const char *e) {
 				cout << e << endl;
@@ -125,7 +123,7 @@ int main(int argc, char const *argv[])
 		}
 		else {
 //			interpreter.interpret(line);
-			auto statement = compiler.compile(line);
+			auto statement = Compiler::compile(line);
 			statement->run(window);
 		}
 	}

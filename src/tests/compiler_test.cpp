@@ -12,9 +12,8 @@
 TEST_SUIT_BEGIN
 
 TEST_CASE("Simple conversion test") {
-	Compiler compiler;
 	{
-		StatementPointer statement = compiler.compile("function apa() {}");
+		StatementPointer statement = Compiler::compile("function apa() {}");
 
 		auto f = dynamic_cast<FunctionDeclaration*> (statement.get());
 
@@ -23,7 +22,7 @@ TEST_CASE("Simple conversion test") {
 		ASSERT_EQ(f->name, "apa");
 	}
 	{
-		auto statement = compiler.compile("apa(x, y, z)");
+		auto statement = Compiler::compile("apa(x, y, z)");
 
 		auto call = dynamic_cast<FunctionCall*> (statement.get());
 

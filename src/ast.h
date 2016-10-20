@@ -73,8 +73,13 @@ public:
 		//Spread: Precedence 1
 		Coma, //Precedence 0
 
+
+		VariableDeclaration,
+
 		FunctionKeyword,
 		ForKeyword,
+		LetKeyword,
+		VarKeyword,
 //		abstract
 //		arguments
 //		boolean
@@ -106,6 +111,9 @@ public:
 		break;
 		case token.Paranthesis:
 			type = Paranthesis;
+		return;
+		case token.Number:
+			type = Digit;
 		return;
 		}
 		auto t = getKeywordType(token);

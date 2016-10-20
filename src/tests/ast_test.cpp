@@ -12,12 +12,14 @@
 TEST_SUIT_BEGIN
 
 TEST_CASE("simple ast test") {
-	AstUnit unit("simple ast test");
+	AstUnit unit("simple ast test 123");
 
-	ASSERT_EQ(unit.size(), 3);
+	ASSERT_EQ(unit.size(), 4);
 	ASSERT_EQ(unit[0].token, "simple");
 	ASSERT_EQ(unit[1].token, "ast");
 	ASSERT_EQ(unit[2].token, "test");
+	ASSERT_EQ(unit[4].token, "123");
+	ASSERT_EQ(unit[4].type, unit.Digit);
 }
 
 TEST_CASE("function test") {

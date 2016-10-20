@@ -1,6 +1,6 @@
 tests = $(patsubst %_test.cpp,%_test,$(wildcard *_test.cpp))
 CPPFLAGS = -g -std=c++11
-objects = ../virtualmachine.o ../jsfunctions.o ../ast.o
+objects = ../virtualmachine.o ../jsfunctions.o ../ast.o ../compiler.o
 
 .PHONY: build_objects
 build_objects:

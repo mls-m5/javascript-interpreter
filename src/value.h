@@ -136,6 +136,28 @@ public:
 		}
 	}
 
+	Value operator +(Value &v) {
+		switch(type) {
+		case Integer:
+			if (v.type == Integer) {
+				return intValue + v.intValue;
+			}
+		}
+		return toString() + v.toString();
+	}
+
+
+	Value operator -(Value &v) {
+		switch(type) {
+		case Integer:
+			if (v.type == Integer) {
+				return intValue - v.intValue;
+			}
+		}
+		throw "NaN not implemented yet";
+//		return toString() + v.toString();
+	}
+
 	Value call(ObjectValue& context, class Value& arguments);
 
 	string toString();
@@ -257,6 +279,7 @@ public:
 	operator string () {
 		return toString();
 	}
+
 
 	virtual string toString() {
 		string ret = "{";

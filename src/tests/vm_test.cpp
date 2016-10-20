@@ -31,8 +31,9 @@ TEST_CASE("simple context test") {
 }
 
 TEST_CASE("simple assignment expression test") {
-	Identifier id1("apa");
-	Identifier id2("bepa");
+	auto id1 = StatementPointer(new LiteralStatement("apa"));
+	auto id2 = StatementPointer(new LiteralStatement("bepa"));
+
 	Assignment assignment1(id1, id2);
 
 	window.defineVariable("bepa", "hejsan");
@@ -96,10 +97,9 @@ TEST_CASE("function call") {
 	};
 
 	TestFunction function;
-	Compiler compiler;
 	window.setVariable("apa", function);
 
-	auto functionCall = StatementPointer(compiler.compile("apa(\"hej\")"));
+	auto functionCall = StatementPointer(Compiler::compile("apa(\"hej\")"));
 
 	functionCall->run(window);
 
@@ -112,6 +112,39 @@ TEST_CASE("function call") {
 
 	window.deleteVariable("apa");
 
+	runGarbageCollection();
+}
+
+TEST_CASE("code block") {
+	auto codeBlock = StatementPointer(Compiler::compile("{var y; y = 3;}"));
+	codeBlock->run(window);
+
+	auto variable = window.getVariable("y");
+	ASSERT_EQ(variable.toString(), "3");
+
+	window.deleteVariable("x");
+	runGarbageCollection();
+}
+
+TEST_CASE("binary statements") {
+	auto statement = StatementPointer(Compiler::compile("4 + 5"));
+	auto variable = statement->run(window);
+	ASSERT_EQ(variable.toString(), "9");
+}
+
+TEST_CASE("variable declaration") {
+	auto variableDeclaration = StatementPointer(Compiler::compile("var x"));
+	auto assignment = StatementPointer(Compiler::compile("x = 1"));
+
+	variableDeclaration->run(window);
+	assignment->run(window);
+
+	auto variable = window.getVariable("x");
+
+	ASSERT_NE(variable.type, variable.Undefined);
+	ASSERT_EQ(variable.toString(), "1");
+
+	window.deleteVariable("x");
 	runGarbageCollection();
 }
 

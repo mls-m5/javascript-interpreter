@@ -12,21 +12,36 @@
 #include <functional>
 
 class Compiler {
+private:
+	Compiler() {};
 public:
-	StatementPointer compile(std::string text) {
+	static StatementPointer compile(std::string text) {
 		AstUnit unit(text);
 		return compile(unit);
 	}
 
-	StatementPointer compile(AstUnit &unit) {
+	static StatementPointer compile(AstUnit &unit) {
 		Statement *statement = nullptr;
 
 		switch (unit.type) {
 		case unit.Word:
 			statement = new LiteralStatement(unit.token);
 		break;
+		case unit.GenericGroup:
+		{
+			if (unit.children.size() == 1) {
+				return compile(unit[0]);
+			}
+			else {
+				throw "statement type cannot be compiled";
+			}
+		}
+		break;
 		case unit.String:
 			statement = new StringLiteralStatement(unit.token);
+		break;
+		case unit.Digit:
+			statement = new NumberLiteralStatement(unit.token);
 		break;
 		case unit.Function:
 		{
@@ -36,6 +51,14 @@ public:
 			}
 
 			statement = f;
+		}
+		break;
+		case unit.BinaryStatement:
+		{
+			if (unit.size() != 3) {
+				throw "failed to create binary statement: wrong number of arguments";
+			}
+			return createBinaryStatement(unit);
 		}
 		break;
 		case unit.Arguments:
@@ -65,17 +88,30 @@ public:
 
 			statement = fc;
 		}
-
+		break;
+		case unit.VariableDeclaration:
+		{
+			if (auto name = unit.getByType(unit.Name)) {
+				auto vd = new VariableDeclaration(name->token);
+				statement = vd;
+			}
+			else {
+				throw "no variable name given in variable declaration";
+			}
+		}
 		break;
 		}
 		if (statement == nullptr) {
 //			throw "statement could not be compiled";
+			std::cout << "warning: zero statement" << endl;
 		}
 		return StatementPointer(statement);
 	}
 
+	static StatementPointer createBinaryStatement(AstUnit& unit);
+
 private:
-	void cumulate(AstUnit &unit, vector<shared_ptr<Statement>> &statements) {
+	static void cumulate(AstUnit &unit, vector<shared_ptr<Statement>> &statements) {
 		if (unit.type == AstUnit::Sequence) {
 			auto first = unit[0];
 			auto second = unit[2];

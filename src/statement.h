@@ -57,7 +57,24 @@ public:
 	Value run(ObjectValue &context) override {
 		return value;
 	}
+};
 
+
+class NumberLiteralStatement: public LiteralStatement {
+public:
+	Value numberValue;
+
+	NumberLiteralStatement(const Token &value): LiteralStatement(value) {
+		std::istringstream ss(value);
+
+		double v;
+		ss >> v;
+		numberValue = v;
+	}
+
+	Value run(ObjectValue &context) override {
+		return numberValue;
+	}
 };
 
 class ArgumentStatement: public Statement {

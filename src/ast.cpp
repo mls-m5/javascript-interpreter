@@ -80,6 +80,8 @@ vector<pair<set<string>, Type>> AstUnit::keywordMap {
 	{{"for"}, ForKeyword},
 	{{"function"}, FunctionKeyword},
 	{{"new"}, NewKeyword},
+	{{"let"}, LetKeyword},
+	{{"var"}, VarKeyword},
 	{{"++", "--"}, Postfix}, //How to separate prefix from the postfix
 	{{"delete", "typeof", "void", "!"}, Prefix},
 	{{"**"}, ExponentiationOperator},
@@ -130,6 +132,12 @@ vector<PatternRule> AstUnit::patterns = {
 	{{Any, QuestionMark, Any, Colon, Any}, Conditional, PatternRule::RightToLeft}, //4
 	{{Any, AssignmentOperator, Any}, BinaryStatement, PatternRule::RightToLeft}, //3
 	{{Any, Coma, Any}, Sequence, PatternRule::LeftToRight, GroupExtra}, //3
+
+	//Variable declarations
+	{{LetKeyword, {Word, Name}}, VariableDeclaration},
+	{{LetKeyword, {Word, Name}, "=", Any}, VariableDeclaration},
+	{{VarKeyword, {Word, Name}}, VariableDeclaration},
+	{{VarKeyword, {Word, Name}, "=", Any}, VariableDeclaration},
 };
 
 AstUnit::Type AstUnit::getKeywordType(Token& token) {

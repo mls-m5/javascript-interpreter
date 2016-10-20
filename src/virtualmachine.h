@@ -23,23 +23,38 @@ public:
 	}
 };
 
-
-class Assignment: public Statement {
+class BinaryStatement: public Statement {
 public:
-	~Assignment() {}
-	Assignment() = default;
-	Assignment(Value identifier, Value expression):
-	identifier(identifier),
-	expression(expression) {}
+	typedef Value (Value::*MemberPointerType) (Value &);
 
-	Value identifier;
-	Value expression;
+	StatementPointer left;
+	StatementPointer right;
+	MemberPointerType functionPointer;
+
+	~BinaryStatement() {}
+	BinaryStatement(StatementPointer left, StatementPointer right, MemberPointerType function = nullptr):
+	left(left),
+	right(right),
+	functionPointer(function){}
+
+
+	Value run(ObjectValue &context) override {
+		auto leftValue = left->run(context);
+		auto rightValue = right->run(context);
+		return (leftValue.*functionPointer)(rightValue);
+	}
+};
+
+class Assignment: public BinaryStatement {
+public:
+	Assignment() = default;
+	Assignment(StatementPointer left, StatementPointer right):
+		BinaryStatement(left, right) {}
 
 	Value run(ObjectValue &context) override {
 		//Todo: in the more performant version this should be calculated in forehand
-		auto value = expression.run(context);
-
-		auto variable = identifier.run(context);
+		auto variable = left->run(context);
+		auto value = right->run(context);
 		if (variable.type == Value::Reference) {
 			*variable.referencePtr = value;
 			return variable;
