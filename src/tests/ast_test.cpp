@@ -11,15 +11,12 @@
 
 TEST_SUIT_BEGIN
 
-TEST_CASE("simple ast test") {
-	AstUnit unit("simple ast test 123");
+TEST_CASE("grouping") {
+	AstUnit unit("{ x }");
 
-	ASSERT_EQ(unit.size(), 4);
-	ASSERT_EQ(unit[0].token, "simple");
-	ASSERT_EQ(unit[1].token, "ast");
-	ASSERT_EQ(unit[2].token, "test");
-	ASSERT_EQ(unit[4].token, "123");
-	ASSERT_EQ(unit[4].type, unit.Digit);
+	ASSERT_EQ(unit.size(), 1);
+	ASSERT_EQ(unit.type, unit.GenericGroup);
+	ASSERT_EQ(unit[0].type, unit.Braces);
 }
 
 TEST_CASE("function test") {

@@ -38,12 +38,23 @@ public:
 			statement = new LiteralStatement(unit.token);
 		break;
 		case unit.GenericGroup:
+		case unit.Braces:
 		{
-			if (unit.children.size() == 1) {
+			if (unit.type != unit.Braces && unit.children.size() == 1) {
 				return compile(unit[0]);
 			}
 			else {
-				throw "statement type cannot be compiled";
+				unit.groupUnit();
+				unit.print(std::cout);
+				auto block = new CodeBlock();
+				for (auto &u: unit) {
+					auto s = compile(*u);
+					u->print(std::cout);
+					if (s) {
+						block->statements.push_back(s);
+					}
+				}
+				statement = block;
 			}
 		}
 		break;
@@ -121,6 +132,9 @@ public:
 				throw CompilationException(unit.createToken(), "no variable name given in variable declaration");
 			}
 		}
+		break;
+		case unit.SemiColon:
+			return StatementPointer(nullptr);
 		break;
 		}
 		if (statement == nullptr) {

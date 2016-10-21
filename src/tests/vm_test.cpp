@@ -122,7 +122,7 @@ TEST_CASE("code block") {
 	auto variable = window.getVariable("y");
 	ASSERT_EQ(variable.toString(), "3");
 
-	window.deleteVariable("x");
+	window.deleteVariable("y");
 	runGarbageCollection();
 }
 
@@ -140,6 +140,10 @@ TEST_CASE("aritmetic statements") {
 
 	auto variable = statement->run(window);
 	ASSERT_EQ(variable.toString(), "14");
+	window.deleteVariable("x");
+	window.deleteVariable("y");
+	window.deleteVariable("z");
+	runGarbageCollection();
 }
 
 

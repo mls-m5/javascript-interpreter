@@ -99,6 +99,7 @@ vector<pair<set<string>, Type>> AstUnit::keywordMap {
 	{{":"}, Colon},
 	{{"=", "+=", "-=", "**=", "*=", "/=", "%=", "<<=", ">>=", ">>>=", "&=", "^=", "!="}, AssignmentOperator},
 	{{","}, Coma},
+	{{";"}, SemiColon},
 };
 
 
@@ -155,7 +156,11 @@ void AstUnit::groupByPatterns() {
 		for (size_t offset = 0; offset <= children.size() - pattern.size() && pattern.size() <= children.size(); ++offset) {
 			bool match = true;
 			for (size_t i = 0; i < pattern.size(); ++i) {
-				if (!(pattern[i] == *children[i + offset])) {
+				if (children[i + offset]->type == SemiColon) {
+					match = false;
+					break;
+				}
+				else if (!(pattern[i] == *children[i + offset])) {
 					match = false;
 					break;
 				}

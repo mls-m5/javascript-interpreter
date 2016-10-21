@@ -30,6 +30,7 @@ public:
 		Paranthesis,
 		Digit,
 		Period,
+		SemiColon,
 		Citation,
 	};
 
@@ -48,7 +49,7 @@ public:
 			it = Letter;
 		}
 
-		setCharacterType("+-*/^.=<>,:", Operator);
+		setCharacterType("+-*/^.=<>,:;", Operator);
 		setCharacterType("[](){}", Paranthesis);
 		setCharacterType(" \n	", Space);
 		setCharacterType("0123456789", Digit);

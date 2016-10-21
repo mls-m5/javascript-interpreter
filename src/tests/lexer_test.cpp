@@ -29,16 +29,18 @@ TEST_CASE("character type test") {
 	ASSERT_EQ(lexer.getCharType(' '), lexer.Space);
 	ASSERT_EQ(lexer.getCharType(')'), lexer.Paranthesis);
 	ASSERT_EQ(lexer.getCharType('='), lexer.Operator);
+	ASSERT_EQ(lexer.getCharType(';'), lexer.SemiColon);
 }
 
 TEST_CASE("string literal test") {
 	SimpleLexer lexer;
-	auto tokens = lexer.tokenize("('hej')\"då\"");
-	ASSERT_EQ(tokens.size(), 4);
+	auto tokens = lexer.tokenize("('hej')\"då\";");
+	ASSERT_EQ(tokens.size(), 5);
 	ASSERT_EQ(tokens[0].type, Token::Paranthesis);
 	ASSERT_EQ(tokens[1].type, Token::StringLiteral);
 	ASSERT_EQ(tokens[2].type, Token::Paranthesis);
 	ASSERT_EQ(tokens[3].type, Token::StringLiteral);
+	ASSERT_EQ(tokens[4].type, Token::Operator);
 }
 
 TEST_CASE("paranthesis separation") {

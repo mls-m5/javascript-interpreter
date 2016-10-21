@@ -73,6 +73,8 @@ public:
 		//Spread: Precedence 1
 		Coma, //Precedence 0
 
+		SemiColon,
+
 
 		VariableDeclaration,
 
@@ -176,7 +178,7 @@ public:
 			const std::string &endString = endStrings[bracketIndex];
 			Type paranthesisType = paranthesisTypes[bracketIndex];
 
-			for (auto i = children.size() - 1; i > 0; --i) {
+			for (auto i = children.size() - 1; i >= 0; --i) {
 				AstUnit &c = *children[i];
 				if (c.type == Paranthesis && c.token == beginString) {
 					for (auto j = 0; j < children.size(); ++j) {
@@ -193,6 +195,10 @@ public:
 							children.insert(it1, AstUnitPtr(ptr));
 						}
 					}
+				}
+				if (i == 0) {
+					//To prevent
+					break;
 				}
 			}
 		}

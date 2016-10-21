@@ -125,15 +125,16 @@ public:
 class CodeBlock: public Statement, public Callable {
 public:
 	~CodeBlock() {}
-	vector<Value> statements;
+	vector<StatementPointer> statements;
 
 	Value run(ObjectValue &context) override {
 		map<string, Value> localVariables;
+		Value ret;
 		for (auto &statement: statements) {
-			statement.run(context);
+			ret = statement->run(context);
 		}
+		return ret;
 	}
-
 };
 
 class FunctionDeclaration: public Statement {
