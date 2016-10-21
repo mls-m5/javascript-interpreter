@@ -29,7 +29,7 @@ TEST_CASE("character type test") {
 	ASSERT_EQ(lexer.getCharType(' '), lexer.Space);
 	ASSERT_EQ(lexer.getCharType(')'), lexer.Paranthesis);
 	ASSERT_EQ(lexer.getCharType('='), lexer.Operator);
-	ASSERT_EQ(lexer.getCharType(';'), lexer.SemiColon);
+	ASSERT_EQ(lexer.getCharType(';'), lexer.Operator);
 }
 
 TEST_CASE("string literal test") {

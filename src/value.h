@@ -388,9 +388,10 @@ inline Value Value::run(class ObjectValue& context) {
 }
 
 inline Value Value::operator =(const Value& value) {
-	if (type == Reference) {
-		*referencePtr = value;
-	}
+//	if (type == Reference) {
+//#error "this seems to be wrong"
+//		*referencePtr = value;
+//	}
 	clear();
 	switch (value.type) {
 	case Object:

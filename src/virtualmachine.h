@@ -128,7 +128,7 @@ public:
 	vector<StatementPointer> statements;
 
 	Value run(ObjectValue &context) override {
-		map<string, Value> localVariables;
+//		map<string, Value> localVariables;
 		Value ret;
 		for (auto &statement: statements) {
 			ret = statement->run(context);

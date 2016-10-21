@@ -10,6 +10,7 @@
 #include "../virtualmachine.h"
 #include "../compiler.h"
 
+
 TEST_SUIT_BEGIN
 
 
@@ -28,6 +29,9 @@ TEST_CASE("simple context test") {
 	context.setVariable("cepa", "re");
 	auto value = context.getVariable("bepa");
 	ASSERT_EQ(value.toString(), "tja");
+
+	window.deleteVariable("bepa");
+	window.deleteVariable("cepa");
 }
 
 TEST_CASE("simple assignment expression test") {
@@ -121,15 +125,19 @@ TEST_CASE("function declaration") {
 		auto variable = window.getVariable("x");
 		ASSERT_EQ(variable.toString(), "apa");
 
-		variable = window.getVariable("x");
 		callStatement->run(window);
+		variable = window.getVariable("x");
 		ASSERT_EQ(variable.toString(), "bepa");
 
-		callStatement->run(window);
+		runGarbageCollection();
+
 	} catch (CompilationException &e) {
 		cout << e.what << ":" << e.token << endl;
 		ASSERT(0, e.what);
 	}
+
+	window.deleteVariable("apa");
+	window.deleteVariable("x");
 
 }
 

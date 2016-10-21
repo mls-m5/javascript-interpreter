@@ -30,7 +30,6 @@ public:
 		Paranthesis,
 		Digit,
 		Period,
-		SemiColon,
 		Citation,
 	};
 
