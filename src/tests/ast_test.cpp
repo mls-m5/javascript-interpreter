@@ -12,7 +12,13 @@
 TEST_SUIT_BEGIN
 
 TEST_CASE("grouping") {
-	AstUnit unit("{ x }");
+	AstUnit unit("{ x = 2 }");
+
+//	unit.print(std::cout);
+
+	unit[0].groupUnit();
+
+//	unit.print(std::cout);
 
 	ASSERT_EQ(unit.size(), 1);
 	ASSERT_EQ(unit.type, unit.GenericGroup);
@@ -23,7 +29,7 @@ TEST_CASE("function test") {
 	{
 		AstUnit unit("function apa () { console.log('hej');} ");
 		ASSERT_EQ(unit.type, unit.Function);
-		ASSERT_EQ(unit[1].type, unit.DeclarationName);
+		ASSERT_EQ(unit[1].type, unit.Name);
 	}
 	{
 		AstUnit unit("x = function apa() {}");

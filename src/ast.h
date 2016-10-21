@@ -239,6 +239,12 @@ public:
 		if (children.empty()) {
 			return;
 		}
+		if (children.size() == 1) {
+			(*this)[0].groupUnit();
+		}
+		if (type != GenericGroup && type != Paranthesis && type != Braces) {
+			return; //The unit is already grouped
+		}
 		groupByParanthesis();
 		groupByPatterns();
 	}

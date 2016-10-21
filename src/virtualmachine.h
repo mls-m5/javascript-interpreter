@@ -139,15 +139,17 @@ public:
 
 class FunctionDeclaration: public Statement {
 public:
-	CodeBlock block;
+	StatementPointer block;
 
-//	Identifier identifier;
 	Token name;
 	~FunctionDeclaration() {}
 
 	//Do special difference except the arguments
 	Value run(ObjectValue &context) override {
-		return Value(block);
+		if (!name.empty()) {
+			context.setVariable(name, *block);
+		}
+		return *block;
 	}
 };
 

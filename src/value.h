@@ -428,6 +428,9 @@ inline Value Value::setValue(string value) {
 
 inline Value Value::call(ObjectValue& context, class Value& arguments) {
 	if (type == StatementPointer) {
+		if (!statementPtr) {
+			throw "trying to call null statement";
+		}
 		return statementPtr->call(context, arguments);
 	} else if (type == Reference) {
 		return referencePtr->call(context, arguments);

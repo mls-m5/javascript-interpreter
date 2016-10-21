@@ -31,14 +31,11 @@ TEST_CASE("simple context test") {
 }
 
 TEST_CASE("simple assignment expression test") {
-	auto id1 = StatementPointer(new LiteralStatement("apa"));
-	auto id2 = StatementPointer(new LiteralStatement("bepa"));
-
-	Assignment assignment1(id1, id2);
+	auto assignment1 = Compiler::compile("apa = bepa");
 
 	window.defineVariable("bepa", "hejsan");
 	window.defineVariable("apa", "dasan");
-	assignment1.run(window);
+	assignment1->run(window);
 
 	auto value = window.getVariable("apa");
 
@@ -99,7 +96,7 @@ TEST_CASE("function call") {
 	TestFunction function;
 	window.setVariable("apa", function);
 
-	auto functionCall = StatementPointer(Compiler::compile("apa(\"hej\")"));
+	auto functionCall = Compiler::compile("apa(\"hej\")");
 
 	functionCall->run(window);
 
@@ -115,8 +112,29 @@ TEST_CASE("function call") {
 	runGarbageCollection();
 }
 
+TEST_CASE("function declaration") {
+	try {
+		auto statement = Compiler::compile("var x = 'apa'; function apa() {x = 'bepa'}");
+		auto callStatement = Compiler::compile("apa()");
+		statement->run(window);
+
+		auto variable = window.getVariable("x");
+		ASSERT_EQ(variable.toString(), "apa");
+
+		variable = window.getVariable("x");
+		callStatement->run(window);
+		ASSERT_EQ(variable.toString(), "bepa");
+
+		callStatement->run(window);
+	} catch (CompilationException &e) {
+		cout << e.what << ":" << e.token << endl;
+		ASSERT(0, e.what);
+	}
+
+}
+
 TEST_CASE("code block") {
-	auto codeBlock = StatementPointer(Compiler::compile("{var y; y = 3;}"));
+	auto codeBlock = Compiler::compile("{var y; y = 3;}");
 	codeBlock->run(window);
 
 	auto variable = window.getVariable("y");
@@ -127,7 +145,7 @@ TEST_CASE("code block") {
 }
 
 TEST_CASE("binary statements") {
-	auto statement = StatementPointer(Compiler::compile("4 + 5"));
+	auto statement = Compiler::compile("4 + 5");
 	auto variable = statement->run(window);
 	ASSERT_EQ(variable.toString(), "9");
 }
@@ -136,7 +154,7 @@ TEST_CASE("aritmetic statements") {
 	window.defineVariable("x", 2);
 	window.defineVariable("y", 3);
 	window.defineVariable("z", 4);
-	auto statement = StatementPointer(Compiler::compile("x + y * z"));
+	auto statement = Compiler::compile("x + y * z");
 
 	auto variable = statement->run(window);
 	ASSERT_EQ(variable.toString(), "14");
@@ -148,8 +166,8 @@ TEST_CASE("aritmetic statements") {
 
 
 TEST_CASE("variable declaration") {
-	auto variableDeclaration = StatementPointer(Compiler::compile("var x"));
-	auto assignment = StatementPointer(Compiler::compile("x = 1"));
+	auto variableDeclaration = Compiler::compile("var x");
+	auto assignment = Compiler::compile("x = 1");
 
 	variableDeclaration->run(window);
 	assignment->run(window);

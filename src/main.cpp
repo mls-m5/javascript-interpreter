@@ -106,6 +106,8 @@ int main(int argc, char const *argv[])
 //	SimpleInterpreter interpreter;
 	auto handleErrors = true;
 
+	vector<StatementPointer> statements;
+
 	while (!cin.eof()) {
 		cout << ">> ";
 		cout.flush();
@@ -115,6 +117,7 @@ int main(int argc, char const *argv[])
 			try {
 //				interpreter.interpret(line);
 				auto statement = Compiler::compile(line);
+				statements.push_back(statement);
 				cout << statement->run(window).toString() << endl;
 			}
 			catch (const char *e) {

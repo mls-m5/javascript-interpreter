@@ -7,6 +7,7 @@
 
 
 #include "ast.h"
+#include <iostream>
 
 using namespace std;
 
@@ -108,7 +109,7 @@ vector<pair<set<string>, Type>> AstUnit::keywordMap {
 
 //Defines the way lots of the expressions is grouped
 vector<PatternRule> AstUnit::patterns = {
-	{{FunctionKeyword, {Word, DeclarationName}, {Paranthesis, Arguments}, Braces}, Function},
+	{{FunctionKeyword, {Word, Name}, {Paranthesis, Arguments}, Braces}, Function},
 	{{FunctionKeyword, {Paranthesis, Arguments}, Braces}, Function},
 	{{ForKeyword, Paranthesis, Braces}, ForLoop},
 
@@ -167,7 +168,10 @@ void AstUnit::groupByPatterns() {
 			}
 
 			if (match) {
-				if ((offset == 0 && pattern.size() == children.size()) && patterns[pi].group == GroupStandard) {
+//				if ((offset == 0 && pattern.size() == children.size()) && patterns[pi].group == GroupStandard && type == GenericGroup) {
+//					std::cout << "do not encapsulate unit" << std::endl;
+//				}
+				if ((offset == 0 && pattern.size() == children.size()) && patterns[pi].group == GroupStandard && type == GenericGroup) {
 					auto newPattern = patterns[pi].second;
 
 					if (newPattern == type) {
@@ -184,6 +188,7 @@ void AstUnit::groupByPatterns() {
 							unit.groupUnit();
 						}
 					}
+					return; //Nothing more to group
 				}
 				else {
 					auto unit = group(offset, offset + pattern.size(), patterns[pi].second);
