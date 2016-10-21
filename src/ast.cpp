@@ -135,9 +135,9 @@ vector<PatternRule> AstUnit::patterns = {
 
 	//Variable declarations
 	{{LetKeyword, {Word, Name}}, VariableDeclaration},
-	{{LetKeyword, {Word, Name}, "=", Any}, VariableDeclaration},
+	{{LetKeyword, {BinaryStatement}}, VariableDeclaration},
 	{{VarKeyword, {Word, Name}}, VariableDeclaration},
-	{{VarKeyword, {Word, Name}, "=", Any}, VariableDeclaration},
+	{{VarKeyword, {BinaryStatement}}, VariableDeclaration},
 };
 
 AstUnit::Type AstUnit::getKeywordType(Token& token) {

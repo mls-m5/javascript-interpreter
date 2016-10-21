@@ -10,6 +10,8 @@
 std::map<string, BinaryStatement::MemberPointerType> operatorFunctionMap = {
 		{"+", &Value::operator+},
 		{"-", &Value::operator-},
+		{"*", &Value::operator*},
+		{"/", &Value::operator/},
 };
 
 StatementPointer Compiler::createBinaryStatement(AstUnit& unit) {
@@ -29,5 +31,5 @@ StatementPointer Compiler::createBinaryStatement(AstUnit& unit) {
 		}
 	}
 
-	throw "not implemented";
+	throw "binary statement not implemented";
 }

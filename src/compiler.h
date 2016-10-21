@@ -11,6 +11,16 @@
 #include "virtualmachine.h"
 #include <functional>
 
+class CompilationException {
+public:
+	CompilationException(Token token, std::string what):
+		what(what),
+		token(token) {}
+
+	std::string what;
+	Token token;
+};
+
 class Compiler {
 private:
 	Compiler() {};
@@ -95,8 +105,20 @@ public:
 				auto vd = new VariableDeclaration(name->token);
 				statement = vd;
 			}
+			else if (auto assignment = unit.getByType(unit.BinaryStatement)) {
+//				unit.print(std::cout);
+				if (assignment->size() != 3) {
+					throw CompilationException(assignment->createToken(), "syntax error in variable declaration");
+				}
+				if ((*assignment)[1].token == "=") {
+					statement = new VariableDeclaration((*assignment)[0].token, compile((*assignment)[2]));
+				}
+				else {
+					throw CompilationException(assignment->createToken(), "unexpected token in variable declaration");
+				}
+			}
 			else {
-				throw "no variable name given in variable declaration";
+				throw CompilationException(unit.createToken(), "no variable name given in variable declaration");
 			}
 		}
 		break;

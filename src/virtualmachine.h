@@ -68,12 +68,17 @@ public:
 class VariableDeclaration: public Statement {
 public:
 	~VariableDeclaration() {}
-	VariableDeclaration(Value name, Value value = Value()): name(name), value(value) {}
+	VariableDeclaration(Value name, StatementPointer value = StatementPointer()): name(name), value(value) {}
 
 	Value name;
-	Value value;
+	StatementPointer value;
 	Value run(ObjectValue &context) override {
-		return context.defineVariable(name.run(context).toString(), value.run(context));
+		if (value) {
+			return context.defineVariable(name.run(context).toString(), value->run(context));
+		}
+		else {
+			return context.defineVariable(name.run(context).toString());
+		}
 	}
 };
 

@@ -151,6 +151,18 @@ public:
 		}
 	}
 
+	Token createToken() {
+		Token t = token;
+
+		for (auto &it: children) {
+			t += it->createToken();
+		}
+
+		t += endToken;
+
+		return t;
+	}
+
 	void groupByPatterns();
 
 	void groupByParanthesis() {

@@ -120,6 +120,9 @@ int main(int argc, char const *argv[])
 			catch (const char *e) {
 				cout << e << endl;
 			}
+			catch (CompilationException &e) {
+				cout << e.token << ": " << e.what << endl;
+			}
 		}
 		else {
 //			interpreter.interpret(line);

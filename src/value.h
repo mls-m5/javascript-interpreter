@@ -10,6 +10,7 @@
 #include <string>
 #include <memory>
 #include <sstream>
+#include <limits>
 #include "token.h"
 using namespace std;
 
@@ -31,6 +32,9 @@ public:
 			break;
 		case Integer:
 			intValue = value.intValue;
+			break;
+		case Number:
+			numberValue = value.numberValue;
 			break;
 		case StatementPointer:
 			statementPtr = value.statementPtr;
@@ -78,6 +82,14 @@ public:
 		setValue(value);
 	}
 
+	Value (const int & value) {
+		setValue((long)value);
+	}
+
+	Value (const double & value) {
+		setValue(value);
+	}
+
 	Value (class ObjectValue &value) {
 		setValue(value);
 	}
@@ -103,6 +115,13 @@ public:
 		clear();
 		type = Integer;
 		intValue = value;
+		return *this;
+	}
+
+	Value setValue(double value) {
+		clear();
+		type = Number;
+		numberValue = value;
 		return *this;
 	}
 
@@ -136,26 +155,47 @@ public:
 		}
 	}
 
-	Value operator +(Value &v) {
-		switch(type) {
-		case Integer:
-			if (v.type == Integer) {
-				return intValue + v.intValue;
-			}
-		}
-		return toString() + v.toString();
+#define VALUE_OPERATOR(op) \
+	Value operator op(Value &v) { \
+		auto value = v.getValue(); \
+		switch(type) { \
+		case Integer: \
+			if (value.type == Integer) { \
+				return intValue op value.intValue; \
+			} \
+			else if (value.type == Number) { \
+				return (double) intValue op value.numberValue; \
+			} \
+			else { \
+				return intValue op value.toNumber(); \
+			} \
+			break; \
+		case Number: \
+			if (value.type == Number) { \
+				return numberValue op value.numberValue; \
+			} \
+			else if(value.type == Integer) { \
+				return numberValue op value.intValue; \
+			} \
+			else { \
+				return numberValue op value.toNumber(); \
+			} \
+			break; \
+		case Reference: \
+			return getValue() op value; \
+		} \
+		return toNumber() op v.toNumber(); \
 	}
 
+	VALUE_OPERATOR(+)
+	VALUE_OPERATOR(-)
+	VALUE_OPERATOR(*)
+	VALUE_OPERATOR(/)
 
-	Value operator -(Value &v) {
-		switch(type) {
-		case Integer:
-			if (v.type == Integer) {
-				return intValue - v.intValue;
-			}
-		}
-		throw "NaN not implemented yet";
-//		return toString() + v.toString();
+	double toNumber() {
+		//Not implemented
+		cout << "warning: conversion to number is not implemented";
+		return numeric_limits<double>::quiet_NaN();
 	}
 
 	Value call(ObjectValue& context, class Value& arguments);
@@ -168,11 +208,11 @@ public:
 		Boolean,
 		Null,
 		Undefined,
+		Integer,
 		Number,
 		String,
 		Symbol,
 		Object,
-		Integer,
 		Reference, //Only used for return value
 		StatementPointer,
 	} type = Undefined;
@@ -369,8 +409,11 @@ inline Value Value::operator =(const Value& value) {
 	case Integer:
 		intValue = value.intValue;
 		break;
+	case Number:
+		numberValue = value.numberValue;
+		break;
 	default:
-		throw "not implemented";
+		throw "assignment not implemented";
 	}
 	type = value.type;
 	return this;
@@ -411,8 +454,14 @@ inline string Value::toString() {
 		ss << intValue;
 		return ss.str();
 	}
+	case Number:
+	{
+		ostringstream ss;
+		ss << numberValue;
+		return ss.str();
+	}
 	default:
-		return "not implemented";
+		return "string conversion not implemented";
 	}
 }
 

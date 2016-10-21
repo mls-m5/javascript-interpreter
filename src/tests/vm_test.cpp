@@ -132,6 +132,17 @@ TEST_CASE("binary statements") {
 	ASSERT_EQ(variable.toString(), "9");
 }
 
+TEST_CASE("aritmetic statements") {
+	window.defineVariable("x", 2);
+	window.defineVariable("y", 3);
+	window.defineVariable("z", 4);
+	auto statement = StatementPointer(Compiler::compile("x + y * z"));
+
+	auto variable = statement->run(window);
+	ASSERT_EQ(variable.toString(), "14");
+}
+
+
 TEST_CASE("variable declaration") {
 	auto variableDeclaration = StatementPointer(Compiler::compile("var x"));
 	auto assignment = StatementPointer(Compiler::compile("x = 1"));
