@@ -23,16 +23,18 @@ public:
 		Word,
 		Digit,
 		String,
-		Paranthesis,
+		Parenthesis,
 		Bracket,
 		Braces,
 		GenericGroup,
 
 		Function,
 		Arguments,
+		Condition,
 		FunctionCall,
 		NewStatement,
 		ForLoop,
+		IfStatement,
 		DeclarationName,
 		Name,
 		Assignment,
@@ -80,6 +82,8 @@ public:
 
 		FunctionKeyword,
 		ForKeyword,
+		IfKeyword,
+		ElseKeyword,
 		LetKeyword,
 		VarKeyword,
 //		abstract
@@ -112,7 +116,7 @@ public:
 			type = String;
 		break;
 		case token.Paranthesis:
-			type = Paranthesis;
+			type = Parenthesis;
 		return;
 		case token.Number:
 			type = Digit;
@@ -167,27 +171,27 @@ public:
 
 	void groupByPatterns();
 
-	void groupByParanthesis() {
+	void groupByParenthesis() {
 		//Todo implement
 		const std::string beginStrings[] = {"{", "(", "["};
 		const std::string endStrings[] = {"}", ")", "]"};
-		const Type paranthesisTypes[] = {Braces, Paranthesis, Bracket};
+		const Type parenthesisTypes[] = {Braces, Parenthesis, Bracket};
 
 		for (auto bracketIndex = 0; bracketIndex < 3; ++bracketIndex) {
 			const std::string &beginString = beginStrings[bracketIndex];
 			const std::string &endString = endStrings[bracketIndex];
-			Type paranthesisType = paranthesisTypes[bracketIndex];
+			Type parenthesisType = parenthesisTypes[bracketIndex];
 
-			for (auto i = children.size() - 1; i >= 0; --i) {
+			for (int i = children.size() - 1; i >= 0; --i) {
 				AstUnit &c = *children[i];
-				if (c.type == Paranthesis && c.token == beginString) {
-					for (auto j = 0; j < children.size(); ++j) {
+				if (c.type == Parenthesis && c.token == beginString) {
+					for (size_t j = i + 1; j < children.size(); ++j) {
 						AstUnit &c2 = *children[j];
-						if (c2.type == Paranthesis && c2.token == endString) {
+						if (c2.type == Parenthesis && c2.token == endString) {
 							auto ptr = new AstUnit();
 							ptr->token = children[i]->token;
 							ptr->endToken = children[j]->token;
-							ptr->type = paranthesisType;
+							ptr->type = parenthesisType;
 							auto it1 = children.begin() + i;
 							auto it2 = children.begin() + j;
 							ptr->children.insert(ptr->children.begin(), it1 + 1, it2);
@@ -195,10 +199,6 @@ public:
 							children.insert(it1, AstUnitPtr(ptr));
 						}
 					}
-				}
-				if (i == 0) {
-					//To prevent
-					break;
 				}
 			}
 		}
@@ -242,10 +242,10 @@ public:
 		if (children.size() == 1) {
 			(*this)[0].groupUnit();
 		}
-		if (type != GenericGroup && type != Paranthesis && type != Braces) {
+		if (type != GenericGroup && type != Parenthesis && type != Braces) {
 			return; //The unit is already grouped
 		}
-		groupByParanthesis();
+		groupByParenthesis();
 		groupByPatterns();
 	}
 

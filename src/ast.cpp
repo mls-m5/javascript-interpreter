@@ -79,6 +79,8 @@ public:
 
 vector<pair<set<string>, Type>> AstUnit::keywordMap {
 	{{"for"}, ForKeyword},
+	{{"if"}, IfKeyword},
+	{{"else"}, ElseKeyword},
 	{{"function"}, FunctionKeyword},
 	{{"new"}, NewKeyword},
 	{{"let"}, LetKeyword},
@@ -109,14 +111,17 @@ vector<pair<set<string>, Type>> AstUnit::keywordMap {
 
 //Defines the way lots of the expressions is grouped
 vector<PatternRule> AstUnit::patterns = {
-	{{FunctionKeyword, {Word, Name}, {Paranthesis, Arguments}, Braces}, Function},
-	{{FunctionKeyword, {Paranthesis, Arguments}, Braces}, Function},
-	{{ForKeyword, Paranthesis, Braces}, ForLoop},
+	{{FunctionKeyword, {Word, Name}, {Parenthesis, Arguments}, Braces}, Function},
+	{{FunctionKeyword, {Parenthesis, Arguments}, Braces}, Function},
+	{{ForKeyword, Parenthesis, Any}, ForLoop},
+	{{IfKeyword, {Parenthesis, Condition}, Any}, IfStatement},
+//	{{IfStatement, ElseKeyword, IfKeyword, {Parenthesis, Condition}, Any}, IfStatement}, //Is grouped as a else and a if statement
+	{{IfStatement, ElseKeyword, Any}, IfStatement}, //Append else statement
 
 	{{Any, Period, Any}, MemberAccess}, //19
 	{{Any, Bracket}, MemberAccess}, //19
-	{{NewKeyword, Any, {Paranthesis, Arguments}}, NewStatement}, //19: new with arguments
-	{{Any, {Paranthesis, Arguments}}, FunctionCall}, //Precence 18
+	{{NewKeyword, Any, {Parenthesis, Arguments}}, NewStatement}, //19: new with arguments
+	{{Any, {Parenthesis, Arguments}}, FunctionCall}, //Precence 18
 	{{NewKeyword, Any}, NewStatement}, //Precence also 18
 	{{Any, Postfix}, PostfixStatement}, //Precedence 17
 	{{Prefix, Any}, PrefixStatement, PatternRule::RightToLeft}, //Precence 16
@@ -152,67 +157,107 @@ AstUnit::Type AstUnit::getKeywordType(Token& token) {
 }
 
 void AstUnit::groupByPatterns() {
-	for (size_t pi = 0; pi < patterns.size(); ++pi) {
-		auto &pattern = patterns[pi].first;
-		for (size_t offset = 0; offset <= children.size() - pattern.size() && pattern.size() <= children.size(); ++offset) {
-			bool match = true;
-			for (size_t i = 0; i < pattern.size(); ++i) {
-				if (children[i + offset]->type == SemiColon) {
-					match = false;
-					break;
+	int offset;
+
+	enum class FunctionAction{
+		None,
+		Continue,
+		BreakLoop,
+		ChangeOffset,
+	};
+
+	auto f = [&offset, this] (vector<PatternUnit> &pattern, int pi) {
+		bool match = true;
+		for (size_t i = 0; i < pattern.size(); ++i) {
+			if (children[i + offset]->type == SemiColon) {
+				match = false;
+				break;
+			}
+			else if (!(pattern[i] == *children[i + offset])) {
+				match = false;
+				break;
+			}
+		}
+
+		if (match) {
+			if ((offset == 0 && pattern.size() == children.size()) && patterns[pi].group == GroupStandard && type == GenericGroup) {
+				auto newPattern = patterns[pi].second;
+
+				if (newPattern == type) {
+					//Prevent the algorithm from doing the same thing twice
+//					continue;
+					return FunctionAction::Continue;
 				}
-				else if (!(pattern[i] == *children[i + offset])) {
-					match = false;
-					break;
+				type = newPattern;
+
+				for (auto i = 0; i < pattern.size(); ++i) {
+					auto target = pattern[i].target;
+					if (target) {
+						auto &unit = (*this)[offset + i];
+						unit.type = target;
+						unit.groupUnit();
+					}
+				}
+				return FunctionAction::BreakLoop; //Nothing more to group
+			}
+			else {
+				auto unit = group(offset, offset + pattern.size(), patterns[pi].second);
+
+				for (auto i = 0; i < pattern.size(); ++i) {
+					auto target = pattern[i].target;
+					auto groupAction = pattern[i].group;
+					if (target) {
+						if (groupAction == GroupExtra) {
+							//Encapsulate the unit in a new Ast unit to save their types
+							auto tmpChild = unit->children[i];
+							auto newChild = AstUnitPtr(new AstUnit());
+							newChild->type = pattern[i].target;
+							newChild->children.push_back(tmpChild);
+							unit->children[i] = newChild;
+						}
+						else {
+							unit->children[i]->type = pattern[i].target;
+							unit->children[i]->groupUnit();
+						}
+					}
 				}
 			}
+			return FunctionAction::ChangeOffset;
+//			offset -= 1;
+		}
+		return FunctionAction::None;
+	};
 
-			if (match) {
-//				if ((offset == 0 && pattern.size() == children.size()) && patterns[pi].group == GroupStandard && type == GenericGroup) {
-//					std::cout << "do not encapsulate unit" << std::endl;
-//				}
-				if ((offset == 0 && pattern.size() == children.size()) && patterns[pi].group == GroupStandard && type == GenericGroup) {
-					auto newPattern = patterns[pi].second;
-
-					if (newPattern == type) {
-						//Prevent the algorithm from doing the same thing twice
-						continue;
-					}
-					type = newPattern;
-
-					for (auto i = 0; i < pattern.size(); ++i) {
-						auto target = pattern[i].target;
-						if (target) {
-							auto &unit = (*this)[offset + i];
-							unit.type = target;
-							unit.groupUnit();
-						}
-					}
-					return; //Nothing more to group
+	for (size_t pi = 0; pi < patterns.size(); ++pi) {
+		auto &rule = patterns[pi];
+		auto &pattern = rule.first;
+		//Do the pattern recogniction in different directions dependent on associativity
+		if (rule.associativity == rule.LeftToRight) {
+			for (offset = 0; offset <= children.size() - pattern.size() && pattern.size() <= children.size(); ++offset) {
+				auto action = f(pattern, pi);
+				if (action == FunctionAction::Continue) {
+					continue;
 				}
-				else {
-					auto unit = group(offset, offset + pattern.size(), patterns[pi].second);
-
-					for (auto i = 0; i < pattern.size(); ++i) {
-						auto target = pattern[i].target;
-						auto groupAction = pattern[i].group;
-						if (target) {
-							if (groupAction == GroupExtra) {
-								//Encapsulate the unit in a new Ast unit to save their types
-								auto tmpChild = unit->children[i];
-								auto newChild = AstUnitPtr(new AstUnit());
-								newChild->type = pattern[i].target;
-								newChild->children.push_back(tmpChild);
-								unit->children[i] = newChild;
-							}
-							else {
-								unit->children[i]->type = pattern[i].target;
-								unit->children[i]->groupUnit();
-							}
-						}
-					}
+				else if (action == FunctionAction::BreakLoop) {
+					break;
 				}
-			offset -= 1;
+				else if (action == FunctionAction::ChangeOffset) {
+					offset -= 1;
+				}
+			}
+		}
+		else {
+			for (offset = children.size() - pattern.size(); offset >= 0 && pattern.size() <= children.size(); --offset) {
+				auto action = f(pattern, pi);
+				if (action == FunctionAction::Continue) {
+					continue;
+				}
+				else if (action == FunctionAction::BreakLoop) {
+					break;
+				}
+				else if (action == FunctionAction::ChangeOffset) {
+					offset += 1;
+				}
 			}
 		}
 	}

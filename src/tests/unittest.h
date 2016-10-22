@@ -37,10 +37,10 @@ inline int runTests(){
 			std::cerr << "error: " << e << endl;
 			test_result = -2;
 		}
-		catch (...) {
-			std::cerr << "error" << endl;
-			test_result = -2;
-		}
+//		catch (...) {
+//			std::cerr << "error" << endl;
+//			test_result = -2;
+//		}
 		if (test_result == -1) {
 			cout << " --> not impl" << endl << endl;
 			test_results[it.first] = "not implemented";

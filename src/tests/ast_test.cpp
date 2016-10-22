@@ -48,6 +48,41 @@ TEST_CASE("function test") {
 	}
 }
 
+TEST_CASE("if-statement") {
+	{
+		AstUnit unit("if (x) {}");
+		ASSERT_EQ(unit.type, unit.IfStatement);
+		ASSERT(unit.getByType(unit.Condition), "could not find condition");
+	}
+	{
+		//Else statement
+		AstUnit unit("if (x) {} else {}");
+		ASSERT_EQ(unit.type, unit.IfStatement);
+		ASSERT_EQ(unit[0].type, unit.IfStatement);
+		ASSERT(unit.getByType(unit.Braces), "no else statement found");
+	}
+	{
+		//Else if statement
+		AstUnit unit("if (x) {} else if(y) {}");
+		ASSERT_EQ(unit.type, unit.IfStatement);
+		ASSERT_EQ(unit[0].type, unit.IfStatement);
+		ASSERT(unit[0].getByType(unit.Condition), "no condition found in if part");
+		ASSERT(unit[0].getByType(unit.Braces), "no if statement found");
+		ASSERT_EQ(unit[1].type, unit.ElseKeyword);
+		ASSERT_EQ(unit[2].type, unit.IfStatement);
+		ASSERT(unit[2].getByType(unit.Condition), "no condition found in else part");
+		ASSERT(unit[2].getByType(unit.Braces), "no else statement found");
+	}
+	{
+		AstUnit unit("if (x) { if (y) {}}");
+		ASSERT_EQ(unit.type, unit.IfStatement);
+		auto braces = unit.getByType(unit.Braces);
+		braces->groupUnit();
+		ASSERT(braces, "could not find statement of if statement");
+		ASSERT_EQ((*braces)[0].type, unit.IfStatement);
+	}
+}
+
 TEST_CASE("multiple binary test") {
 	AstUnit unit("x * y * z");
 
