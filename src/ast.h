@@ -214,6 +214,21 @@ public:
 		return nullptr;
 	}
 
+	//Get the statement after a special statement
+	//for example the statement after the keyword else
+	AstUnit *getAfterToken(Type type) {
+		bool selectNext = false;
+		for (auto &it: children) {
+			if (it->type == type) {
+				selectNext = true;
+			}
+			else if (selectNext) {
+				return &*it;
+			}
+		}
+		return nullptr;
+	}
+
 	AstUnit *group(size_t begin, size_t end, Type t) {
 		auto it1 = children.begin() + begin;
 		auto it2 = children.begin() + end;

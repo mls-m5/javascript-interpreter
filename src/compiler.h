@@ -13,7 +13,7 @@
 
 class CompilationException {
 public:
-	CompilationException(Token token, std::string what):
+	CompilationException(Token token, const std::string what):
 		what(what),
 		token(token) {}
 

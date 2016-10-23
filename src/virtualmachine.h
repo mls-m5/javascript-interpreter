@@ -153,6 +153,41 @@ public:
 	}
 };
 
+class IfStatement: public Statement {
+public:
+	IfStatement(StatementPointer condition, StatementPointer block):
+		conditions({condition}),
+		blocks({block}) {}
+	IfStatement() {};
+
+	std::vector<StatementPointer> conditions, blocks;
+
+	Value run(ObjectValue &context) override {
+		for (ptrdiff_t i = 0; i < conditions.size(); ++i) {
+			auto &condition = conditions[i];
+			auto &block = blocks[i];
+			if (condition->run(context)) {
+				return block->run(context);
+			}
+		}
+		//Check if there is another else block (without condition)
+		if (blocks.size() > conditions.size()) {
+			return blocks.back()->run(context);
+		}
+		else {
+			return UndefinedValue;
+		}
+	}
+};
+
+class IfElseStatement: public IfStatement {
+public:
+	IfElseStatement(StatementPointer condition, StatementPointer block, StatementPointer elseBlock):
+	IfStatement(condition, block){}
+
+
+};
+
 class FunctionCall: public Statement {
 public:
 	~FunctionCall() {}

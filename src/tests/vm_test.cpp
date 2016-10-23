@@ -116,6 +116,47 @@ TEST_CASE("function call") {
 	runGarbageCollection();
 }
 
+TEST_CASE("if-statement") {
+	{
+		auto statement = Compiler::compile("var x = 1; if (1) {x = 2} if (0) {x = 3}");
+
+		statement->run(window);
+
+		auto variable = window.getVariable("x");
+
+		ASSERT_EQ(variable.toString(), "2");
+
+		window.deleteVariable("x");
+	}
+	{
+		auto statement = Compiler::compile("var x = 1; if (0) {x = 2} else {x = 3}");
+
+		statement->run(window);
+
+		auto variable = window.getVariable("x");
+
+		ASSERT_EQ(variable.toString(), "3");
+
+		window.deleteVariable("x");
+
+	}
+
+	{
+		auto statement = Compiler::compile("var x = 1; if (0) {x = 2} else if(1) {x = 5} else {x = 4}");
+
+		statement->run(window);
+
+		auto variable = window.getVariable("x");
+
+		ASSERT_EQ(variable.toString(), "5");
+
+		window.deleteVariable("x");
+
+	}
+
+	runGarbageCollection();
+}
+
 TEST_CASE("function declaration") {
 	try {
 		auto statement = Compiler::compile("var x = 'apa'; function apa() {x = 'bepa'}");

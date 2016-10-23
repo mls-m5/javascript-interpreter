@@ -22,6 +22,7 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 		statement = new LiteralStatement(unit.token);
 		break;
 	case unit.GenericGroup:
+	case unit.Condition:
 	case unit.Braces: {
 		if (unit.type != unit.Braces && unit.children.size() == 1) {
 			return compile(unit[0]);
@@ -113,9 +114,51 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 			block->groupUnit();
 			f->block = compile(*block);
 		}
-//		unit.print(std::cout);
 		statement = f;
 	}
+	break;
+	case unit.IfStatement:
+		//Build if-statements
+		auto i = new IfStatement();
+		auto &conditions = i->conditions;
+		auto &blocks = i->blocks;
+		bool plainElseBlockAllowed = true; //A else block without condition only allowed one time in the end
+
+		auto firstStatement = &unit;
+		while (firstStatement && firstStatement->type == unit.IfStatement) {
+			if (auto afterElseStatement = firstStatement->getAfterToken(unit.ElseKeyword)) {
+				if (afterElseStatement->type == unit.IfStatement) {
+					//The last else is a "else if": extract if-stuff from it
+					conditions.insert(conditions.begin(), compile(*afterElseStatement->getByType(unit.Condition)));
+					blocks.insert(blocks.begin(), compile((*afterElseStatement->getByType(unit.Braces))));
+				}
+				else {
+					if (!plainElseBlockAllowed) {
+						throw CompilationException(unit.createToken(), "only one else statement is allowed");
+					}
+					//It is only a else-statement add that
+					blocks.insert(blocks.begin(), compile(*afterElseStatement));
+
+					plainElseBlockAllowed = false;
+				}
+			}
+
+			if (auto condition = firstStatement->getByType(unit.Condition)) {
+				//The final if-statement
+				auto block = firstStatement->getByType(unit.Braces);
+
+				conditions.insert(conditions.begin(), compile(*condition));
+				blocks.insert(blocks.begin(), compile(*block));
+
+				firstStatement = nullptr; //Breaks the loop
+			}
+			else {
+				firstStatement = &(*firstStatement)[0]; //Continue one more time
+			}
+
+			plainElseBlockAllowed = false; //Only allowed in the end (that is first in the loop)
+		}
+		statement = i;
 	break;
 	}
 	if (statement == nullptr) {

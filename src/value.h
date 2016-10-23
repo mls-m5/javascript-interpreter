@@ -134,6 +134,8 @@ public:
 		return *this;
 	}
 
+	operator bool();
+
 	ObjectValue *getObject() {
 		if (type == Object) {
 			return objectPtr;
@@ -425,6 +427,22 @@ inline Value Value::setValue(string value) {
 	type = String;
 	stringValue = new StringValue(value);
 	return *this;
+}
+
+inline Value::operator bool() {
+	if (type == Boolean) {
+		return boolValue;
+	} else if (type == Number) {
+		return numberValue != 0;
+	} else if (type == Integer) {
+		return intValue != 0;
+	} else if (type == String) {
+		return !stringValue->value.empty();
+	} else if (type == Object) {
+		return objectPtr;
+	} else {
+		return false;
+	}
 }
 
 inline Value Value::call(ObjectValue& context, class Value& arguments) {
