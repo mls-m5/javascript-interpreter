@@ -10,19 +10,23 @@ all: build_objects
 
 tests: ${tests} 
 
-vm_test: vm_test.cpp ../virtualmachine.h ../value.h ../statement.h $(objects)
-	g++ $< -o $@ ${CPPFLAGS} ${objects}
-	
-	
-gc_test: gc_test.cpp ../virtualmachine.h ../value.h ../statement.h $(objects)
-	g++ $< -o $@ ${CPPFLAGS} ${objects}
-	
-
-lexer_test: lexer_test.cpp ../lexer.h $(objects)
-	g++ $< -o $@ ${CPPFLAGS} ${objects}
-	
-ast_test: ast_test.cpp ../lexer.h ../ast.h $(objects)
+%_test: %_test.o $(objects)
 	g++ $< -o $@ ${CPPFLAGS} ${objects}
 
-compiler_test: compiler_test.cpp ../value.h ../lexer.h ../ast.h ../compiler.h ../statement.h $(objects)
-	g++ $< -o $@ ${CPPFLAGS} ${objects}
+vm_test.o: vm_test.cpp ../virtualmachine.h ../value.h ../statement.h ../compiler.h ../ast.h
+	g++ -c $< -o $@ ${CPPFLAGS}
+	
+	
+gc_test.o: gc_test.cpp ../virtualmachine.h ../value.h ../statement.h
+	g++ -c $< -o $@ ${CPPFLAGS}
+	
+
+lexer_test.o: lexer_test.cpp ../lexer.h
+	g++ -c $< -o $@ ${CPPFLAGS}
+	
+ast_test.o: ast_test.cpp ../lexer.h ../ast.h
+	g++ -c $< -o $@ ${CPPFLAGS}
+
+compiler_test.o: compiler_test.cpp ../value.h ../lexer.h ../ast.h ../compiler.h ../statement.h
+	g++ -c $< -o $@ ${CPPFLAGS}
+	

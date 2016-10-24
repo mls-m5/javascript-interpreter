@@ -12,6 +12,18 @@ std::map<string, BinaryStatement::MemberPointerType> operatorFunctionMap = {
 		{"-", &Value::operator-},
 		{"*", &Value::operator*},
 		{"/", &Value::operator/},
+		{"<", &Value::operator<},
+		{">", &Value::operator>},
+};
+
+
+
+std::map<string, UnaryStatement::MemberPointerType> unaryOperatorFunctionMap = {
+		{"++", &Value::operator++},
+		{"--", &Value::operator++},
+		{"+", &Value::unaryPlus},
+		{"-", &Value::unaryMinus},
+		{"!", &Value::operator!},
 };
 
 
@@ -28,11 +40,9 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 			return compile(unit[0]);
 		} else {
 			unit.groupUnit();
-//			unit.print(std::cout);
 			auto block = new CodeBlock();
 			for (auto& u : unit) {
 				auto s = compile(*u);
-//				u->print(std::cout);
 				if (s) {
 					block->statements.push_back(s);
 				}
@@ -47,13 +57,21 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 	case unit.Digit:
 		statement = new NumberLiteralStatement(unit.token);
 		break;
+	case unit.Boolean:
+		statement = new BooleanLiteralStatement(unit.token);
+		break;
 	case unit.BinaryStatement: {
 		if (unit.size() != 3) {
 			throw "failed to create binary statement: wrong number of arguments";
 		}
 		return createBinaryStatement(unit);
 	}
-		break;
+	case unit.PrefixStatement: {
+		if (unit.size() != 2) {
+			throw CompilationException(unit.createToken(), "prefix statement is of wrong type");
+		}
+		return createPrefixStatement(unit);
+	}
 	case unit.Arguments: {
 		auto s = new ArgumentStatement();
 		if (!unit.empty()) {
@@ -118,6 +136,7 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 	}
 	break;
 	case unit.IfStatement:
+	{
 		//Build if-statements
 		auto i = new IfStatement();
 		auto &conditions = i->conditions;
@@ -159,6 +178,24 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 			plainElseBlockAllowed = false; //Only allowed in the end (that is first in the loop)
 		}
 		statement = i;
+	}
+	break;
+	case unit.WhileLoop:
+	{
+		auto condition = unit.getByType(unit.Condition);
+		condition->groupUnit();
+		if (condition->size() != 1) {
+			throw CompilationException(unit.createToken(), "syntax error in while loop");
+		}
+		auto &block = unit[2];
+		auto w = new WhileLoop(compile(*condition), compile(block));
+		statement = w;
+	}
+	break;
+	case unit.ForLoop:
+	{
+//		auto argument = unit.getByType(unit.)
+	}
 	break;
 	}
 	if (statement == nullptr) {
@@ -170,21 +207,31 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 
 
 StatementPointer Compiler::createBinaryStatement(AstUnit& unit) {
-	typedef StatementPointer SPtr;
-
 	auto left = compile(unit[0]);
 	auto right = compile(unit[2]);
 	auto middleToken = unit[1].token;
 
 	if (middleToken == "=") {
-		return SPtr(new Assignment(left, right));
+		return StatementPointer(new Assignment(left, right));
 	}
 	else {
 		auto f = operatorFunctionMap.find(middleToken);
 		if (f != operatorFunctionMap.end()) {
-			return SPtr(new BinaryStatement(left, right, f->second));
+			return StatementPointer(new BinaryStatement(left, right, f->second));
 		}
 	}
 
 	throw "binary statement not implemented";
+}
+
+StatementPointer Compiler::createPrefixStatement(AstUnit& unit) {
+	auto statement = compile(unit[1]);
+	auto op = unit[0].token;
+
+	auto f = unaryOperatorFunctionMap.find(op);
+	if (f != unaryOperatorFunctionMap.end()) {
+		return StatementPointer(new UnaryStatement(statement, f->second));
+	}
+
+	throw "unary statement not implemented";
 }

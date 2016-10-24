@@ -79,13 +79,16 @@ public:
 
 vector<pair<set<string>, Type>> AstUnit::keywordMap {
 	{{"for"}, ForKeyword},
+	{{"while"}, WhileKeyword},
 	{{"if"}, IfKeyword},
 	{{"else"}, ElseKeyword},
 	{{"function"}, FunctionKeyword},
+	{{"true"}, Boolean},
+	{{"false"}, Boolean},
 	{{"new"}, NewKeyword},
 	{{"let"}, LetKeyword},
 	{{"var"}, VarKeyword},
-	{{"++", "--"}, Postfix}, //How to separate prefix from the postfix
+	{{"++", "--"}, PrefixOrPostfix}, //How to separate prefix from the postfix?
 	{{"delete", "typeof", "void", "!"}, Prefix},
 	{{"**"}, ExponentiationOperator},
 	{{"*", "/", "%"}, ExponentiationOperator},
@@ -114,16 +117,22 @@ vector<PatternRule> AstUnit::patterns = {
 	{{FunctionKeyword, {Word, Name}, {Parenthesis, Arguments}, Braces}, Function},
 	{{FunctionKeyword, {Parenthesis, Arguments}, Braces}, Function},
 	{{ForKeyword, Parenthesis, Any}, ForLoop},
+	{{WhileKeyword, {Parenthesis, Condition}, Any}, WhileLoop},
 	{{IfKeyword, {Parenthesis, Condition}, Any}, IfStatement},
 //	{{IfStatement, ElseKeyword, IfKeyword, {Parenthesis, Condition}, Any}, IfStatement}, //Is grouped as a else and a if statement
 	{{IfStatement, ElseKeyword, Any}, IfStatement}, //Append else statement
+
 
 	{{Any, Period, Any}, MemberAccess}, //19
 	{{Any, Bracket}, MemberAccess}, //19
 	{{NewKeyword, Any, {Parenthesis, Arguments}}, NewStatement}, //19: new with arguments
 	{{Any, {Parenthesis, Arguments}}, FunctionCall}, //Precence 18
 	{{NewKeyword, Any}, NewStatement}, //Precence also 18
-	{{Any, Postfix}, PostfixStatement}, //Precedence 17
+	{{Word, PrefixOrPostfix}, PostfixStatement}, //Precedence 17
+	{{Parenthesis, PrefixOrPostfix}, PostfixStatement}, //Precedence 17 - alternative 2
+
+	{{PrefixOrPostfix, Word}, PrefixStatement, PatternRule::RightToLeft}, //Precence 16
+	{{PrefixOrPostfix, Parenthesis}, PrefixStatement, PatternRule::RightToLeft}, //Precence 16
 	{{Prefix, Any}, PrefixStatement, PatternRule::RightToLeft}, //Precence 16
 	{{Any, ExponentiationOperator, Any}, BinaryStatement}, //15
 	{{Any, Operator14, Any}, BinaryStatement}, //14

@@ -21,12 +21,13 @@ public:
 		None,
 		Any = None,
 		Word,
+		GenericGroup,
 		Digit,
 		String,
+		Boolean,
 		Parenthesis,
 		Bracket,
 		Braces,
-		GenericGroup,
 
 		Function,
 		Arguments,
@@ -34,6 +35,7 @@ public:
 		FunctionCall,
 		NewStatement,
 		ForLoop,
+		WhileLoop,
 		IfStatement,
 		DeclarationName,
 		Name,
@@ -54,7 +56,7 @@ public:
 
 		Period,
 		NewKeyword, //18 with function call
-		Postfix, //17
+		PrefixOrPostfix, //17
 		Prefix, //16
 		DeleteKeyword, //16
 		ExponentiationOperator, //15
@@ -82,6 +84,7 @@ public:
 
 		FunctionKeyword,
 		ForKeyword,
+		WhileKeyword,
 		IfKeyword,
 		ElseKeyword,
 		LetKeyword,
@@ -257,7 +260,7 @@ public:
 		if (children.size() == 1) {
 			(*this)[0].groupUnit();
 		}
-		if (type != GenericGroup && type != Parenthesis && type != Braces) {
+		if (type != GenericGroup && type != Parenthesis && type != Braces && type != Condition) {
 			return; //The unit is already grouped
 		}
 		groupByParenthesis();

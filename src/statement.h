@@ -77,6 +77,23 @@ public:
 	}
 };
 
+class BooleanLiteralStatement: public LiteralStatement {
+public:
+	Value boolValue;
+
+	BooleanLiteralStatement(const Token &value): LiteralStatement(value) {
+		if (value == "true") {
+			boolValue = true;
+		}
+		else if (value == "false") {
+			boolValue = false;
+		}
+		else {
+			throw "value not boolean in boolean literal constructor";
+		}
+	}
+};
+
 class ArgumentStatement: public Statement {
 public:
 	vector<StatementPointer> statements;

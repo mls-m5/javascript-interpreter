@@ -45,6 +45,23 @@ public:
 	}
 };
 
+class UnaryStatement: public Statement {
+public:
+	typedef Value (Value::*MemberPointerType) ();
+
+	StatementPointer statement;
+	MemberPointerType functionPointer;
+
+	UnaryStatement(StatementPointer statement, MemberPointerType function):
+	statement(statement),
+	functionPointer(function){}
+
+	Value run(ObjectValue &context) override {
+		auto statementValue = statement->run(context);
+		return (statementValue.*functionPointer)();
+	}
+};
+
 class Assignment: public BinaryStatement {
 public:
 	Assignment() = default;
@@ -180,12 +197,21 @@ public:
 	}
 };
 
-class IfElseStatement: public IfStatement {
+class WhileLoop: public Statement {
 public:
-	IfElseStatement(StatementPointer condition, StatementPointer block, StatementPointer elseBlock):
-	IfStatement(condition, block){}
+	WhileLoop(StatementPointer condition, StatementPointer block):
+	condition(condition), block(block){}
+	StatementPointer condition, block;
 
 
+	Value run(ObjectValue &context) override {
+		Value returnValue;
+
+		while (auto c = condition->run(context)) {
+			block->run(context);
+		}
+		return returnValue;
+	}
 };
 
 class FunctionCall: public Statement {

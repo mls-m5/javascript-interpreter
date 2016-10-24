@@ -36,6 +36,9 @@ public:
 		case Number:
 			numberValue = value.numberValue;
 			break;
+		case Boolean:
+			boolValue = value.boolValue;
+			break;
 		case StatementPointer:
 			statementPtr = value.statementPtr;
 			break;
@@ -75,7 +78,7 @@ public:
 	}
 
 	Value (const char *value) {
-		setValue(value);
+		setValue((string)value);
 	}
 
 	Value (const long & value) {
@@ -90,6 +93,10 @@ public:
 		setValue(value);
 	}
 
+	Value (bool value) {
+		setValue(value);
+	}
+
 	Value (class ObjectValue &value) {
 		setValue(value);
 	}
@@ -97,6 +104,7 @@ public:
 	Value (class Statement &value) {
 		setValue(value);
 	}
+
 
 	//Declared after object value
 	Value run(class ObjectValue& context);
@@ -122,6 +130,13 @@ public:
 		clear();
 		type = Number;
 		numberValue = value;
+		return *this;
+	}
+
+	Value setValue(bool value) {
+		clear();
+		type = Boolean;
+		boolValue = value;
 		return *this;
 	}
 
@@ -157,7 +172,7 @@ public:
 		}
 	}
 
-#define VALUE_OPERATOR(op) \
+#define VALUE_NUMERIC_OPERATOR(op) \
 	Value operator op(Value &v) { \
 		auto value = v.getValue(); \
 		switch(type) { \
@@ -189,16 +204,47 @@ public:
 		return toNumber() op v.toNumber(); \
 	}
 
-	VALUE_OPERATOR(+)
-	VALUE_OPERATOR(-)
-	VALUE_OPERATOR(*)
-	VALUE_OPERATOR(/)
+	VALUE_NUMERIC_OPERATOR(+)
+	VALUE_NUMERIC_OPERATOR(-)
+	VALUE_NUMERIC_OPERATOR(*)
+	VALUE_NUMERIC_OPERATOR(/)
+	VALUE_NUMERIC_OPERATOR(<)
+	VALUE_NUMERIC_OPERATOR(>)
 
-	double toNumber() {
-		//Not implemented
-		cout << "warning: conversion to number is not implemented";
-		return numeric_limits<double>::quiet_NaN();
+
+#define VALUE_PREFIX_OPERATOR(op) \
+	Value operator op() { \
+		switch(type) { \
+		case Integer: \
+			return op intValue; \
+			return *this; \
+		case Number: \
+			op numberValue; \
+			return *this; \
+		case Reference: \
+			op (*referencePtr); \
+			return *this; \
+		} \
+		return op (*this = toNumber()); \
 	}
+
+	VALUE_PREFIX_OPERATOR(++)
+	VALUE_PREFIX_OPERATOR(--)
+
+	Value operator!() {
+		return !bool(*this);
+	}
+
+	Value unaryPlus() {
+		return toNumber();
+	}
+
+	Value unaryMinus() {
+		return -toNumber();
+	}
+
+	//Convert a value to a number
+	double toNumber();
 
 	Value call(ObjectValue& context, class Value& arguments);
 
@@ -218,6 +264,8 @@ public:
 		Reference, //Only used for return value
 		StatementPointer,
 	} type = Undefined;
+
+	static constexpr const double NaN = numeric_limits<double>::quiet_NaN();
 
 	//All types except objects are immutable objects
 	union {
@@ -415,6 +463,9 @@ inline Value Value::operator =(const Value& value) {
 	case Number:
 		numberValue = value.numberValue;
 		break;
+	case Boolean:
+		boolValue = value.boolValue;
+		break;
 	default:
 		throw "assignment not implemented";
 	}
@@ -445,6 +496,37 @@ inline Value::operator bool() {
 	}
 }
 
+inline double Value::toNumber() {
+	switch (type) {
+	case Integer:
+		return intValue;
+	case Number:
+		return numberValue;
+	case String: {
+		auto& str = stringValue->value;
+		if (str.empty()) {
+			return NaN;
+		}
+		int numPeriods = 0;
+		for (auto c : str) {
+			if (!isdigit(c) && c != '.') {
+				return NaN;
+			} else if (c == '.') {
+				++numPeriods;
+				if (numPeriods > 1) {
+					return NaN;
+				}
+			}
+		}
+		istringstream ss(str);
+		double value;
+		ss >> value;
+		return value;
+	}
+	}
+	return NaN;
+}
+
 inline Value Value::call(ObjectValue& context, class Value& arguments) {
 	if (type == StatementPointer) {
 		if (!statementPtr) {
@@ -470,6 +552,13 @@ inline string Value::toString() {
 		return statementPtr->toString();
 	case Reference:
 		return referencePtr->toString();
+	case Boolean:
+		if (boolValue) {
+			return "true";
+		}
+		else {
+			return "false";
+		}
 	case Integer:
 	{
 		ostringstream ss;

@@ -10,6 +10,21 @@
 #include "../virtualmachine.h"
 #include "../compiler.h"
 
+//A class that removes the variables when out of scope
+class VariableGuard {
+public:
+	VariableGuard(string variable): variables({variable}) {}
+	VariableGuard(const std::initializer_list<string> variables): variables(variables) {}
+
+	~VariableGuard() {
+		for (auto it: variables) {
+			window.deleteVariable(it);
+		}
+		runGarbageCollection();
+	}
+
+	vector<string> variables;
+};
 
 TEST_SUIT_BEGIN
 
@@ -157,7 +172,40 @@ TEST_CASE("if-statement") {
 	runGarbageCollection();
 }
 
+TEST_CASE("unary statements") {
+	auto statement = Compiler::compile("var x = 0; ++x");
+	statement->run(window);
+
+	auto variable = window.getVariable("x");
+
+	ASSERT_EQ(variable.toString(), "1");
+
+	window.deleteVariable("x");
+	runGarbageCollection();
+}
+
+TEST_CASE("while loop") {
+	auto statement = Compiler::compile("var x = 0; while (x < 3) { ++x }");
+	statement->run(window);
+
+	auto variable = window.getVariable("x");
+	ASSERT_EQ(variable.toString(), "3");
+
+	window.deleteVariable("x");
+	runGarbageCollection();
+}
+
+//TEST_CASE("for loop") {
+//	auto statement = Compiler::compile("for (let i = 0; i < 2; ++i) {}");
+//	VariableGuard("x");
+//
+//	auto variable = window.getVariable("x");
+//
+//	ASSERT_EQ(variable.toNumber(), 3);
+//}
+
 TEST_CASE("function declaration") {
+	VariableGuard({"x", "apa"});
 	try {
 		auto statement = Compiler::compile("var x = 'apa'; function apa() {x = 'bepa'}");
 		auto callStatement = Compiler::compile("apa()");

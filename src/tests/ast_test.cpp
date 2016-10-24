@@ -83,6 +83,22 @@ TEST_CASE("if-statement") {
 	}
 }
 
+TEST_CASE("for loop") {
+	AstUnit unit("for (let x = 0; x < 3; ++x) {console.log(x)}");
+	ASSERT_EQ(unit.type, unit.ForLoop);
+}
+
+TEST_CASE("literals") {
+	AstUnit stringUnit("\"hej\"");
+	ASSERT_EQ(stringUnit[0].type, stringUnit.String);
+
+	AstUnit booleanUnit("true");
+	ASSERT_EQ(booleanUnit[0].type, booleanUnit.Boolean);
+
+	AstUnit numberUnit("1.0");
+	ASSERT_EQ(numberUnit[0].type, numberUnit.Digit);
+}
+
 TEST_CASE("multiple binary test") {
 	AstUnit unit("x * y * z");
 
@@ -133,8 +149,20 @@ TEST_CASE("operator 16") {
 		AstUnit unit("delete x");
 		ASSERT_EQ(unit.type, unit.PrefixStatement);
 	}
+
+	{
+		AstUnit unit("++ x");
+		unit.print(std::cout);
+		ASSERT_EQ(unit.type, unit.PrefixStatement);
+	}
 }
 
+TEST_CASE("binary operator in condition") {
+	AstUnit unit("(x < 1)");
+	unit[0].type = unit.Condition;
+	unit[0].groupUnit();
+	ASSERT_EQ(unit[0][0].type, unit.BinaryStatement);
+}
 
 TEST_CASE("operator 3-15 (binary + conditional)") {
 	std::vector<std::string> operators = {"**", "*", "+", "<<", "<", "==", "&", "|", "^", "&&", "||", "="};
