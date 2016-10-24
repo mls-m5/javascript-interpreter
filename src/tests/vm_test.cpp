@@ -195,17 +195,18 @@ TEST_CASE("while loop") {
 	runGarbageCollection();
 }
 
-//TEST_CASE("for loop") {
-//	auto statement = Compiler::compile("for (let i = 0; i < 2; ++i) {}");
-//	VariableGuard("x");
-//
-//	auto variable = window.getVariable("x");
-//
-//	ASSERT_EQ(variable.toNumber(), 3);
-//}
+TEST_CASE("for loop") {
+	auto statement = Compiler::compile("for (let i = 0; i < 2; ++i) {}");
+	statement->run(window);
+	VariableGuard guard("i");
+
+	auto variable = window.getVariable("i");
+
+	ASSERT_EQ(variable.toNumber(), 2);
+}
 
 TEST_CASE("function declaration") {
-	VariableGuard({"x", "apa"});
+	VariableGuard guard({"x", "apa"});
 	try {
 		auto statement = Compiler::compile("var x = 'apa'; function apa() {x = 'bepa'}");
 		auto callStatement = Compiler::compile("apa()");

@@ -126,7 +126,8 @@ vector<PatternRule> AstUnit::patterns = {
 	{{Any, Period, Any}, MemberAccess}, //19
 	{{Any, Bracket}, MemberAccess}, //19
 	{{NewKeyword, Any, {Parenthesis, Arguments}}, NewStatement}, //19: new with arguments
-	{{Any, {Parenthesis, Arguments}}, FunctionCall}, //Precence 18
+	{{Word, {Parenthesis, Arguments}}, FunctionCall}, //Precence 18
+	{{Parenthesis, {Parenthesis, Arguments}}, FunctionCall}, //Precence 18
 	{{NewKeyword, Any}, NewStatement}, //Precence also 18
 	{{Word, PrefixOrPostfix}, PostfixStatement}, //Precedence 17
 	{{Parenthesis, PrefixOrPostfix}, PostfixStatement}, //Precedence 17 - alternative 2

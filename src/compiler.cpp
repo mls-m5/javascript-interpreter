@@ -194,7 +194,16 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 	break;
 	case unit.ForLoop:
 	{
-//		auto argument = unit.getByType(unit.)
+		auto &argument = unit[1];
+		auto &block = unit[2];
+
+		auto initialization = argument[0];
+		auto condition = argument[2];
+		auto increment = argument[4];
+
+		auto f = new ForLoop(compile(initialization), compile(condition), compile(increment), compile(block));
+
+		statement = f;
 	}
 	break;
 	}

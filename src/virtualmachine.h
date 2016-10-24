@@ -208,7 +208,25 @@ public:
 		Value returnValue;
 
 		while (auto c = condition->run(context)) {
-			block->run(context);
+			returnValue = block->run(context);
+		}
+		return returnValue;
+	}
+};
+
+class ForLoop: public Statement {
+public:
+	ForLoop(StatementPointer initialization, StatementPointer condition, StatementPointer increment, StatementPointer block):
+	initialization(initialization), condition(condition), increment(increment), block(block){}
+	StatementPointer initialization, condition, increment, block;
+
+
+	Value run(ObjectValue &context) override {
+		Value returnValue;
+		initialization->run(context);
+		while (auto c = condition->run(context)) {
+			returnValue = block->run(context);
+			increment->run(context);
 		}
 		return returnValue;
 	}

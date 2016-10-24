@@ -498,6 +498,8 @@ inline Value::operator bool() {
 
 inline double Value::toNumber() {
 	switch (type) {
+	case Reference:
+		return referencePtr->toNumber();
 	case Integer:
 		return intValue;
 	case Number:
