@@ -295,11 +295,6 @@ public:
 	static void* operator new(std::size_t sz);
 
 	Value getVariable(string identifier, bool allowReference = true) {
-		if (this == &window) {
-			if (identifier == "window") {
-				return windowValue;
-			}
-		}
 		for (auto &it: children) {
 			if (it.first == identifier) {
 				if (allowReference) {
@@ -375,7 +370,12 @@ public:
 		string ret = "{";
 
 		for (auto it: children) {
-			ret += (it.first + ": " + it.second.toString() + ", ");
+			if (it.second.type == Value::Object && it.second.objectPtr == this) {
+				ret += (it.first + ": [circular reference], ");
+			}
+			else {
+				ret += (it.first + ": " + it.second.toString() + ", ");
+			}
 		}
 
 		ret += "}";

@@ -41,6 +41,7 @@ public:
 		console->defineVariable("log", consoleLog);
 		window.setVariable("console", *console);
 		window.setVariable("log", consoleLog); //Todo: remove this.. only for debugging
+		window.setVariable("window", window);
 	}
 
 } initializer;
