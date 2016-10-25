@@ -25,10 +25,10 @@ public:
 		return "statement";
 	}
 
-	Value call(ObjectValue &context, Value &expression) {
+	Value call(ObjectValue &context, Value &arguments) {
 		ObjectValue localContext;
 		localContext.parent = &context;
-		localContext.defineVariable("arguments", expression);
+		localContext.defineVariable("arguments", arguments);
 		return this->run(localContext);
 	}
 };
@@ -65,6 +65,14 @@ public:
 	Value numberValue;
 
 	NumberLiteralStatement(const Token &value): LiteralStatement(value) {
+		if (value == "NaN") {
+			numberValue = NaN;
+			return;
+		}
+		else if (value == "Infinity") {
+			numberValue = Infinity;
+			return;
+		}
 		std::istringstream ss(value);
 
 		double v;
@@ -111,19 +119,5 @@ public:
 	}
 };
 
-
-class Operator: public Statement{
-	Operator(string value): value(value) {}
-
-	Value run(ObjectValue &context) override {
-		throw "operator not callable";
-	}
-
-	string toString() override {
-		return value;
-	}
-
-	string value;
-};
 
 

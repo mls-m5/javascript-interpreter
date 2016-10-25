@@ -35,7 +35,7 @@ public:
 		name(name),
 		target(target),
 		group(groupingAction){}
-	PatternUnit(AstUnit::Type type): type(type), target(type) {}
+	PatternUnit(AstUnit::Type type): type(type), target(Type::None) {}
 	PatternUnit(AstUnit::Type type, AstUnit::Type target, GroupingAction groupingAction = GroupStandard):
 		type(type),
 		target(target),
@@ -43,7 +43,12 @@ public:
 
 	bool operator == (AstUnit& unit) {
 		if (type) {
-			if (unit.type != type) {
+			if (type == unit.Identifier) {
+				if (unit.type != unit.Word && unit.type != unit.Parenthesis && unit.type != unit.PropertyAccessor) {
+					return false;
+				}
+			}
+			else if (unit.type != type) {
 				return false;
 			}
 		}
@@ -106,6 +111,9 @@ vector<pair<set<string>, Type>> AstUnit::keywordMap {
 	{{"=", "+=", "-=", "**=", "*=", "/=", "%=", "<<=", ">>=", ">>>=", "&=", "^=", "!="}, AssignmentOperator},
 	{{","}, Coma},
 	{{";"}, SemiColon},
+	{{"."}, Period},
+	{{"NaN"}, Number},
+	{{"Infinity"}, Number},
 };
 
 
@@ -123,14 +131,12 @@ vector<PatternRule> AstUnit::patterns = {
 	{{IfStatement, ElseKeyword, Any}, IfStatement}, //Append else statement
 
 
-	{{Any, Period, Any}, MemberAccess}, //19
-	{{Any, Bracket}, MemberAccess}, //19
+	{{Any, Period, {Word, String}}, PropertyAccessor}, //19
+	{{Any, Bracket}, PropertyAccessor}, //19
 	{{NewKeyword, Any, {Parenthesis, Arguments}}, NewStatement}, //19: new with arguments
-	{{Word, {Parenthesis, Arguments}}, FunctionCall}, //Precence 18
-	{{Parenthesis, {Parenthesis, Arguments}}, FunctionCall}, //Precence 18
+	{{Identifier, {Parenthesis, Arguments}}, FunctionCall}, //Precence 18
 	{{NewKeyword, Any}, NewStatement}, //Precence also 18
-	{{Word, PrefixOrPostfix}, PostfixStatement}, //Precedence 17
-	{{Parenthesis, PrefixOrPostfix}, PostfixStatement}, //Precedence 17 - alternative 2
+	{{Identifier, PrefixOrPostfix}, PostfixStatement}, //Precedence 17
 
 	{{PrefixOrPostfix, Word}, PrefixStatement, PatternRule::RightToLeft}, //Precence 16
 	{{PrefixOrPostfix, Parenthesis}, PrefixStatement, PatternRule::RightToLeft}, //Precence 16
@@ -148,7 +154,7 @@ vector<PatternRule> AstUnit::patterns = {
 	{{Any, Or, Any}, BinaryStatement}, //5
 	{{Any, QuestionMark, Any, Colon, Any}, Conditional, PatternRule::RightToLeft}, //4
 	{{Any, AssignmentOperator, Any}, BinaryStatement, PatternRule::RightToLeft}, //3
-	{{Any, Coma, Any}, Sequence, PatternRule::LeftToRight, GroupExtra}, //3
+	{{Any, Coma, Any}, Sequence}, //3
 
 	//Variable declarations
 	{{LetKeyword, {Word, Name}}, VariableDeclaration},

@@ -21,8 +21,8 @@ public:
 static class ConsoleLog: public NativeFunction {
 	Value run(ObjectValue &context) override {
 		auto arguments = context.getVariable("arguments", false);
-		if (arguments.type != arguments.Undefined) {
-			cout << arguments.getObject()->getVariable("0").run(context).toString() << endl;
+		if (auto o = arguments.getObject()) {
+			cout << o->getVariable("0").toString() << endl;
 		}
 		else {
 			throw "no arguments to console log";
@@ -40,7 +40,6 @@ public:
 		auto console = new ObjectValue;
 		console->defineVariable("log", consoleLog);
 		window.setVariable("console", *console);
-		window.setVariable("log", consoleLog); //Todo: remove this.. only for debugging
 		window.setVariable("window", window);
 	}
 

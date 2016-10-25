@@ -96,7 +96,7 @@ TEST_CASE("literals") {
 	ASSERT_EQ(booleanUnit[0].type, booleanUnit.Boolean);
 
 	AstUnit numberUnit("1.0");
-	ASSERT_EQ(numberUnit[0].type, numberUnit.Digit);
+	ASSERT_EQ(numberUnit[0].type, numberUnit.Number);
 }
 
 TEST_CASE("multiple binary test") {
@@ -176,11 +176,17 @@ TEST_CASE("operator 3-15 (binary + conditional)") {
 	}
 }
 
-TEST_CASE("operator 0 - Coma sequence") {
+TEST_CASE("operator 4 - Conditional") {
 	{
 		AstUnit unit("23? x: y");
 		ASSERT_EQ(unit.type, unit.Conditional);
 	}
+}
+
+TEST_CASE("operator 0 - Sequences(coma)") {
+	AstUnit unit("1, 2 ,3");
+
+	ASSERT_EQ(unit.type, unit.Sequence);
 }
 
 

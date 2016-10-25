@@ -123,6 +123,9 @@ int main(int argc, char const *argv[])
 			catch (const char *e) {
 				cout << e << endl;
 			}
+			catch (RuntimeException &e) {
+				cout << e.what << endl;
+			}
 			catch (CompilationException &e) {
 				cout << e.token << ": " << e.what << endl;
 			}

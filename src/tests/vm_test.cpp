@@ -205,41 +205,61 @@ TEST_CASE("for loop") {
 	ASSERT_EQ(variable.toNumber(), 2);
 }
 
+TEST_CASE("property accessor") {
+	auto statement = Compiler::compile("x.y = 2");
+	VariableGuard g("x");
+
+	auto o = new ObjectValue;
+	o->defineVariable("y", "0");
+	window.defineVariable("x", *o);
+
+	statement->run(window);
+
+	auto result = o->getVariable("y");
+	ASSERT_EQ(result.toString(), "2");
+}
+
 TEST_CASE("function declaration") {
-	VariableGuard guard({"x", "apa"});
 	try {
-		auto statement = Compiler::compile("var x = 'apa'; function apa() {x = 'bepa'}");
-		auto callStatement = Compiler::compile("apa()");
-		statement->run(window);
+		{
+			VariableGuard guard({"x", "apa"});
+			auto statement = Compiler::compile("var x = 'apa'; function apa() {x = 'bepa'}");
+			auto callStatement = Compiler::compile("apa()");
+			statement->run(window);
 
-		auto variable = window.getVariable("x");
-		ASSERT_EQ(variable.toString(), "apa");
+			auto variable = window.getVariable("x");
+			ASSERT_EQ(variable.toString(), "apa");
 
-		callStatement->run(window);
-		variable = window.getVariable("x");
-		ASSERT_EQ(variable.toString(), "bepa");
+			callStatement->run(window);
+			variable = window.getVariable("x");
+			ASSERT_EQ(variable.toString(), "bepa");
+		}
+		{
+			VariableGuard guard({"x", "apa"});
+			auto statement = Compiler::compile("var x = 'apa'; function apa(y, z, a, b) {x = y}");
+			auto callStatement = Compiler::compile("apa('bepa')");
+			statement->run(window);
 
-		runGarbageCollection();
+			auto variable = window.getVariable("x");
+			ASSERT_EQ(variable.toString(), "apa");
 
+			callStatement->run(window);
+			variable = window.getVariable("x");
+			ASSERT_EQ(variable.toString(), "bepa");
+		}
 	} catch (CompilationException &e) {
 		cout << e.what << ":" << e.token << endl;
 		ASSERT(0, e.what);
 	}
-
-	window.deleteVariable("apa");
-	window.deleteVariable("x");
-
 }
 
 TEST_CASE("code block") {
+	VariableGuard g("y");
 	auto codeBlock = Compiler::compile("{var y; y = 3;}");
 	codeBlock->run(window);
 
 	auto variable = window.getVariable("y");
 	ASSERT_EQ(variable.toString(), "3");
-
-	window.deleteVariable("y");
-	runGarbageCollection();
 }
 
 TEST_CASE("binary statements") {

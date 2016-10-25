@@ -12,7 +12,12 @@
 #include <sstream>
 #include <limits>
 #include "token.h"
+#include "exceptions.h"
+#include <cmath>
 using namespace std;
+
+static constexpr const double NaN = numeric_limits<double>::quiet_NaN();
+static constexpr const double Infinity = numeric_limits<double>::infinity();
 
 class Value {
 public:
@@ -231,6 +236,8 @@ public:
 	VALUE_PREFIX_OPERATOR(++)
 	VALUE_PREFIX_OPERATOR(--)
 
+	Value propertyAccessor(Value& v);
+
 	Value operator!() {
 		return !bool(*this);
 	}
@@ -264,8 +271,6 @@ public:
 		Reference, //Only used for return value
 		StatementPointer,
 	} type = Undefined;
-
-	static constexpr const double NaN = numeric_limits<double>::quiet_NaN();
 
 	//All types except objects are immutable objects
 	union {
@@ -325,9 +330,9 @@ public:
 		return children.end();
 	}
 
-	Value setVariable(string identifier, Value value) {
-		if (value.type == Value::Undefined) {
-			throw "value not defined";
+	Value setVariable(string identifier, Value value, bool allowUndefined = false) {
+		if (value.type == Value::Undefined && !allowUndefined) {
+			throw RuntimeException("value not defined when setting variable");
 		}
 		auto it = getVariableIterator(identifier);
 		if (it == children.end()) {
@@ -496,6 +501,21 @@ inline Value::operator bool() {
 	}
 }
 
+inline Value Value::propertyAccessor(Value& v) {
+	if (type == Object) {
+		auto f = objectPtr->getVariableIterator(v.toString());
+		if (f == objectPtr->children.end()) {
+			return UndefinedValue;
+		} else {
+			return &f->second;
+		}
+	} else if (type == Reference) {
+		return referencePtr->propertyAccessor(v);
+	} else {
+		throw "try to access property of non object";
+	}
+}
+
 inline double Value::toNumber() {
 	switch (type) {
 	case Reference:
@@ -569,6 +589,12 @@ inline string Value::toString() {
 	}
 	case Number:
 	{
+		if (numberValue != numberValue) {
+			return "NaN";
+		}
+		else if (isinf(numberValue)) {
+			return "Infinity";
+		}
 		ostringstream ss;
 		ss << numberValue;
 		return ss.str();

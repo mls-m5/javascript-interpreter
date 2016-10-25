@@ -154,6 +154,27 @@ public:
 	}
 };
 
+//A class that manages function argument names
+class FunctionBlock: public Statement {
+public:
+	vector<Token> argumentNames;
+
+	StatementPointer block;
+
+
+	Value run(ObjectValue &context) override {
+		Value arguments = context.getVariable("arguments");
+		if (auto o = arguments.getObject()) {
+			for (int i = 0; i < argumentNames.size(); ++i) {
+				Value index(i);
+				auto argument = o->getVariable(index.toString());
+				context.setVariable(argumentNames[i], argument, true);
+			}
+		}
+		block->run(context);
+	}
+};
+
 class FunctionDeclaration: public Statement {
 public:
 	StatementPointer block;
@@ -239,8 +260,6 @@ public:
 	FunctionCall(const FunctionCall &) = default;
 	FunctionCall(StatementPointer identifier):
 		identifier(identifier) {}
-//	FunctionCall(StatementPointer identifier, Value arguments):
-//	identifier(identifier), arguments(arguments){}
 
 	StatementPointer identifier;
 	ArgumentStatement arguments;
@@ -248,7 +267,6 @@ public:
 	//Todo make it possible to send arguments
 	Value run(ObjectValue &context) override {
 		auto functionValue = identifier->run(context).getValue();//context.getVariable(identifier);
-//		auto functionValue =  context.getVariable(id.toString());
 
 		if (functionValue.type != Value::Undefined) {
 			if (arguments.statements.empty()) {

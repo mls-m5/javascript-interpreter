@@ -22,12 +22,13 @@ public:
 		Any = None,
 		Word,
 		GenericGroup,
-		Digit,
+		Number,
 		String,
 		Boolean,
 		Parenthesis,
 		Bracket,
 		Braces,
+		Identifier, //Phony type that means Word, PropertyAccessor or Paranthesis
 
 		Function,
 		Arguments,
@@ -46,7 +47,7 @@ public:
 		Left,
 		Right,
 
-		MemberAccess,
+		PropertyAccessor,
 		ComputedMemberAccess,
 		PostfixStatement,
 		PrefixStatement,
@@ -122,7 +123,7 @@ public:
 			type = Parenthesis;
 		return;
 		case token.Number:
-			type = Digit;
+			type = Number;
 		return;
 		}
 		auto t = getKeywordType(token);
@@ -260,7 +261,7 @@ public:
 		if (children.size() == 1) {
 			(*this)[0].groupUnit();
 		}
-		if (type != GenericGroup && type != Parenthesis && type != Braces && type != Condition) {
+		if (type != GenericGroup && type != Parenthesis && type != Braces && type != Condition && type != Arguments) {
 			return; //The unit is already grouped
 		}
 		groupByParenthesis();
@@ -280,6 +281,10 @@ public:
 	}
 
 	AstUnit &operator [] (size_t index) {
+		return *children[index];
+	}
+
+	AstUnit &get(size_t index) {
 		return *children[index];
 	}
 

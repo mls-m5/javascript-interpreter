@@ -7,13 +7,14 @@
 
 #include "compiler.h"
 
-std::map<string, BinaryStatement::MemberPointerType> operatorFunctionMap = {
+std::map<string, BinaryStatement::MemberPointerType> binaryOperatorFunctionMap = {
 		{"+", &Value::operator+},
 		{"-", &Value::operator-},
 		{"*", &Value::operator*},
 		{"/", &Value::operator/},
 		{"<", &Value::operator<},
 		{">", &Value::operator>},
+		{".", &Value::propertyAccessor},
 };
 
 
@@ -54,12 +55,13 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 	case unit.String:
 		statement = new StringLiteralStatement(unit.token);
 		break;
-	case unit.Digit:
+	case unit.Number:
 		statement = new NumberLiteralStatement(unit.token);
 		break;
 	case unit.Boolean:
 		statement = new BooleanLiteralStatement(unit.token);
 		break;
+	case unit.PropertyAccessor:
 	case unit.BinaryStatement: {
 		if (unit.size() != 3) {
 			throw "failed to create binary statement: wrong number of arguments";
@@ -68,9 +70,15 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 	}
 	case unit.PrefixStatement: {
 		if (unit.size() != 2) {
-			throw CompilationException(unit.createToken(), "prefix statement is of wrong type");
+			throw CompilationException(unit.createToken(), "prefix statement is of wrong format");
 		}
 		return createPrefixStatement(unit);
+	}
+	case unit.PostfixStatement: {
+		if (unit.size() != 2) {
+			throw CompilationException(unit.createToken(), "postfix statement is of wrong format");
+		}
+		throw CompilationException(unit.createToken(), "postfix not implemented");
 	}
 	case unit.Arguments: {
 		auto s = new ArgumentStatement();
@@ -93,7 +101,47 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 		}
 		statement = fc;
 	}
-		break;
+	break;
+	case unit.Function:
+	{
+		auto f = new FunctionDeclaration();
+
+		if (auto name = unit.getByType(unit.Name)) {
+			f->name = name->token;
+		}
+
+		vector<Token> argumentNames;
+		//Sum all the arguments to a list
+		if (auto arguments = unit.getByType(unit.Arguments)) {
+			arguments->groupUnit();
+
+			if (!arguments->empty()) {
+				if (arguments->size() == 1) {
+					auto &sequence = arguments->get(0);
+					std::function<void (AstUnit&)> sum = [&argumentNames, &sum] (AstUnit &sequence) {
+						if (sequence.type == AstUnit::Sequence) {
+							sum(sequence.get(0));
+							argumentNames.push_back(sequence.get(2).token);
+						}
+						else {
+							argumentNames.push_back(sequence.token);
+						}
+					};
+					sum(sequence);
+				}
+			}
+		}
+
+		if (auto block = unit.getByType(unit.Braces)) {
+			block->groupUnit();
+			auto functionBlock = new FunctionBlock();
+			functionBlock->block = compile(*block);
+			functionBlock->argumentNames = argumentNames;
+			f->block.reset(functionBlock);
+		}
+		statement = f;
+	}
+	break;
 	case unit.VariableDeclaration: {
 		if (auto name = unit.getByType(unit.Name)) {
 			auto vd = new VariableDeclaration(name->token);
@@ -120,21 +168,6 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 	case unit.SemiColon:
 		return StatementPointer(nullptr);
 		break;
-	case unit.Function:
-	{
-		auto f = new FunctionDeclaration();
-
-		if (auto name = unit.getByType(unit.Name)) {
-			f->name = name->token;
-		}
-
-		if (auto block = unit.getByType(unit.Braces)) {
-			block->groupUnit();
-			f->block = compile(*block);
-		}
-		statement = f;
-	}
-	break;
 	case unit.IfStatement:
 	{
 		//Build if-statements
@@ -195,6 +228,7 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 	case unit.ForLoop:
 	{
 		auto &argument = unit[1];
+		argument.groupUnit();
 		auto &block = unit[2];
 
 		auto initialization = argument[0];
@@ -224,8 +258,8 @@ StatementPointer Compiler::createBinaryStatement(AstUnit& unit) {
 		return StatementPointer(new Assignment(left, right));
 	}
 	else {
-		auto f = operatorFunctionMap.find(middleToken);
-		if (f != operatorFunctionMap.end()) {
+		auto f = binaryOperatorFunctionMap.find(middleToken);
+		if (f != binaryOperatorFunctionMap.end()) {
 			return StatementPointer(new BinaryStatement(left, right, f->second));
 		}
 	}
@@ -244,3 +278,4 @@ StatementPointer Compiler::createPrefixStatement(AstUnit& unit) {
 
 	throw "unary statement not implemented";
 }
+

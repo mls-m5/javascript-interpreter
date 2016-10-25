@@ -11,15 +11,7 @@
 #include "virtualmachine.h"
 #include <functional>
 
-class CompilationException {
-public:
-	CompilationException(Token token, const std::string what):
-		what(what),
-		token(token) {}
 
-	std::string what;
-	Token token;
-};
 
 class Compiler {
 private:
@@ -37,17 +29,28 @@ public:
 
 private:
 	//Combine binary statements of type sequence to one object
-	static void cumulate(AstUnit &unit, vector<shared_ptr<Statement>> &statements) {
+	static void cumulate(AstUnit &unit, vector<shared_ptr<Statement>> &statements, bool literals = false) {
 		if (unit.type == AstUnit::Sequence) {
 			auto first = unit[0];
 			auto second = unit[2];
 
-			cumulate(first, statements);
+			cumulate(first, statements, literals);
 
-			statements.push_back(compile(second));
+			if (literals) {
+				statements.push_back(StatementPointer(new StringLiteralStatement(second.token)));
+			}
+			else {
+				statements.push_back(compile(second));
+			}
 		}
 		else {
-			statements.push_back(compile(unit));
+			if (literals) {
+				statements.push_back(StatementPointer(new StringLiteralStatement(unit.token)));
+			}
+			else {
+				statements.push_back(compile(unit));
+			}
+
 		}
 	};
 
