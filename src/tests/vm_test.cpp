@@ -29,12 +29,21 @@ public:
 TEST_SUIT_BEGIN
 
 
-TEST_CASE("simple assignment test") {
-	Value value, value2;
-	value.setValue("hej");
-	value2 = value;
-	ASSERT_EQ(value.toString(), value2.toString());
-
+TEST_CASE("assignnment tests") {
+	{
+		VariableGuard g("x");
+		auto statement = Compiler::compile("var x; x = 2");
+		statement->run(window);
+		auto variable = window.getVariable("x");
+		ASSERT_EQ(variable.toString(), "2");
+	}
+	{
+		VariableGuard g("x");
+		auto statement = Compiler::compile("var x = 1; x += 2");
+		statement->run(window);
+		auto variable = window.getVariable("x");
+		ASSERT_EQ(variable.toString(), "3");
+	}
 }
 
 TEST_CASE("simple context test") {
@@ -263,9 +272,27 @@ TEST_CASE("code block") {
 }
 
 TEST_CASE("binary statements") {
-	auto statement = Compiler::compile("4 + 5");
-	auto variable = statement->run(window);
-	ASSERT_EQ(variable.toString(), "9");
+	{
+		auto statement = Compiler::compile("4 + 5");
+		auto variable = statement->run(window);
+		ASSERT_EQ(variable.toString(), "9");
+	}
+	{
+		auto statement = Compiler::compile("2 == 2");
+		auto variable = statement->run(window);
+		ASSERT_EQ(variable.toString(), "true");
+	}
+	{
+		auto statement = Compiler::compile("2 != 3");
+		auto variable = statement->run(window);
+		ASSERT_EQ(variable.toString(), "true");
+	}
+	{
+		auto statement = Compiler::compile("2 <= 3");
+		auto variable = statement->run(window);
+		ASSERT_EQ(variable.toString(), "true");
+	}
+
 }
 
 TEST_CASE("aritmetic statements") {

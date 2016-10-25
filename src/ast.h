@@ -78,7 +78,7 @@ public:
 		//Spread: Precedence 1
 		Coma, //Precedence 0
 
-		SemiColon,
+		Semicolon,
 
 
 		VariableDeclaration,

@@ -215,6 +215,45 @@ public:
 	VALUE_NUMERIC_OPERATOR(/)
 	VALUE_NUMERIC_OPERATOR(<)
 	VALUE_NUMERIC_OPERATOR(>)
+	VALUE_NUMERIC_OPERATOR(>=)
+	VALUE_NUMERIC_OPERATOR(<=)
+
+#define VALUE_EQUALITY_OPERATOR(op) \
+	Value operator op(Value &v) { \
+		auto value = v.getValue(); \
+		switch(type) { \
+		case Number: \
+			return numberValue op v.toNumber(); \
+		case Integer: \
+			if (v.type == Integer) { \
+				return intValue op v.intValue; \
+			} \
+			else { \
+				return intValue op v.toNumber(); \
+			} \
+		case Object: \
+			if (v.type == Object) { \
+				return objectPtr op v.objectPtr; \
+			} \
+			else { \
+				return false; \
+			} \
+		case Reference: \
+			return *referencePtr op value; \
+		} \
+		return false; \
+	}
+
+	VALUE_EQUALITY_OPERATOR(==)
+	VALUE_EQUALITY_OPERATOR(!=)
+
+	Value operator += (Value &v) {
+		if (type != Reference) {
+			throw RuntimeException("type is not reference in assignment");
+		}
+		Value value = v.getValue();
+		return (*referencePtr = *this + v);
+	}
 
 
 #define VALUE_PREFIX_OPERATOR(op) \

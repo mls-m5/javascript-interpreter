@@ -113,6 +113,14 @@ TEST_CASE("keyword test") {
 	ASSERT_EQ(unit[0].type, AstUnit::FunctionKeyword);
 }
 
+TEST_CASE("semicolon separated statements") {
+	AstUnit unit("x = 1; y = 2");
+	unit.print(std::cout);
+	ASSERT_EQ(unit[0].type, unit.BinaryStatement);
+	ASSERT_EQ(unit[1].type, unit.Semicolon);
+	ASSERT_EQ(unit[2].type, unit.BinaryStatement);
+}
+
 TEST_CASE("operator 19") {
 	{
 		AstUnit unit("new Apa (x)"); //New with arguments

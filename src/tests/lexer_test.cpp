@@ -54,9 +54,9 @@ TEST_CASE("paranthesis separation") {
 TEST_CASE("more advanced tokenizer test") {
 	SimpleLexer lexer;
 
-	auto tokens = lexer.tokenize("Hej43 tjoho(x.y - ++i);");
+	auto tokens = lexer.tokenize("Hej43 tjoho(x.y - ++i); !=");
 
-	ASSERT_EQ(tokens.size(), 11);
+	ASSERT_GT(tokens.size(), 11);
 	ASSERT_EQ(tokens[0], "Hej43");
 	ASSERT_EQ(tokens[0].type, Token::Word);
 	ASSERT_EQ(tokens[1], "tjoho");
@@ -72,6 +72,8 @@ TEST_CASE("more advanced tokenizer test") {
 	ASSERT_EQ(tokens[8], "i");
 	ASSERT_EQ(tokens[9], ")");
 	ASSERT_EQ(tokens[10], ";");
+	ASSERT_EQ(tokens[11], "!=");
+	ASSERT_EQ(tokens.size(), 12);
 }
 
 TEST_SUIT_END

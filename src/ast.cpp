@@ -110,7 +110,7 @@ vector<pair<set<string>, Type>> AstUnit::keywordMap {
 	{{":"}, Colon},
 	{{"=", "+=", "-=", "**=", "*=", "/=", "%=", "<<=", ">>=", ">>>=", "&=", "^=", "!="}, AssignmentOperator},
 	{{","}, Coma},
-	{{";"}, SemiColon},
+	{{";"}, Semicolon},
 	{{"."}, Period},
 	{{"NaN"}, Number},
 	{{"Infinity"}, Number},
@@ -185,7 +185,7 @@ void AstUnit::groupByPatterns() {
 	auto f = [&offset, this] (vector<PatternUnit> &pattern, int pi) {
 		bool match = true;
 		for (size_t i = 0; i < pattern.size(); ++i) {
-			if (children[i + offset]->type == SemiColon) {
+			if (children[i + offset]->type == Semicolon) {
 				match = false;
 				break;
 			}
@@ -272,6 +272,7 @@ void AstUnit::groupByPatterns() {
 					break;
 				}
 				else if (action == FunctionAction::ChangeOffset) {
+					offset -= pattern.size();
 					offset += 1;
 				}
 			}

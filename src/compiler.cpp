@@ -14,6 +14,11 @@ std::map<string, BinaryStatement::MemberPointerType> binaryOperatorFunctionMap =
 		{"/", &Value::operator/},
 		{"<", &Value::operator<},
 		{">", &Value::operator>},
+		{"<=", &Value::operator<=},
+		{">=", &Value::operator>=},
+		{"==", &Value::operator==},
+		{"!=", &Value::operator!=},
+		{"+=", &Value::operator+=},
 		{".", &Value::propertyAccessor},
 };
 
@@ -165,7 +170,7 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 		}
 	}
 		break;
-	case unit.SemiColon:
+	case unit.Semicolon:
 		return StatementPointer(nullptr);
 		break;
 	case unit.IfStatement:
