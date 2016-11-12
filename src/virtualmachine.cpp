@@ -36,16 +36,18 @@ void markAllChildren(ObjectValue *object) {
 }
 
 void runGarbageCollection() {
-	for (auto &ptr: javascriptMemory) {
-		ptr->alive = false;
-	}
+//	for (auto &ptr: javascriptMemory) {
+//		ptr->alive = false;
+//	}
 
 	window.alive = false; //Prepare window for algorithm
 	markAllChildren(&window);
 
 	//Remove all that has not been marked as alive
 	auto f = [](const std::unique_ptr<ObjectValue> & value){
-		return !value->alive;
+		auto alive = value->alive;
+		value->alive = false; //Unmark the child
+		return !alive;
 	};
 	javascriptMemory.erase(
 			std::remove_if(
