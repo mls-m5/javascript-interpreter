@@ -171,7 +171,7 @@ public:
 				context.setVariable(argumentNames[i], argument, true);
 			}
 		}
-		block->run(context);
+		return block->run(context);
 	}
 };
 

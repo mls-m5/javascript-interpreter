@@ -104,6 +104,27 @@ int parseFile(string fname) {
 
 	auto statement = Compiler::compile(file);
 	statement->run(window);
+	return 0;
+}
+
+int printAst() {
+	AstUnit unit(cin);
+
+	unit.print(cout);
+
+	return 0;
+}
+
+int printTokens() {
+	SimpleLexer lexer;
+
+	auto tokens = lexer.tokenize(cin);
+
+	for (auto it: tokens) {
+		cout << it << endl;
+	}
+
+	return 0;
 }
 
 
@@ -114,9 +135,16 @@ int main(int argc, char const *argv[])
 //	SimpleInterpreter interpreter;
 
 	if (argc > 1) {
-		parseFile(argv[1]);
-
-		return 0;
+		string arg1 = argv[1];
+		if (arg1 == "--ast") {
+			return printAst();
+		}
+		else if (arg1 == "--token") {
+			return printTokens();
+		}
+		else {
+			return parseFile(arg1);
+		}
 	}
 
 

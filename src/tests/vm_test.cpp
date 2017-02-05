@@ -351,6 +351,15 @@ TEST_CASE("object test") {
 	ASSERT_EQ(ret->getVariable("x").toString(), "1");
 }
 
+TEST_CASE("function arguments") {
+	VariableGuard g({"x", "apa"});
+	auto statement = Compiler::compile("var x = 0; function apa(x) {x()}; apa(function() {x = 2});");
+	statement->run(window);
+
+	auto variable = window.getVariable("x");
+	ASSERT_EQ(variable.toString(), "2");
+}
+
 
 TEST_SUIT_END
 

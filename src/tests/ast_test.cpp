@@ -12,17 +12,49 @@
 TEST_SUIT_BEGIN
 
 TEST_CASE("grouping") {
-	AstUnit unit("{ x = 2 }");
+	{
+		AstUnit unit("{ x = 2 }");
 
-//	unit.print(std::cout);
+		//	unit.print(std::cout);
 
-	unit[0].groupUnit();
+		unit[0].groupUnit();
 
-//	unit.print(std::cout);
+		//	unit.print(std::cout);
 
-	ASSERT_EQ(unit.size(), 1);
-	ASSERT_EQ(unit.type, unit.GenericGroup);
-	ASSERT_EQ(unit[0].type, unit.Braces);
+		ASSERT_EQ(unit.size(), 1);
+		ASSERT_EQ(unit.type, unit.GenericGroup);
+		ASSERT_EQ(unit[0].type, unit.Braces);
+	}
+
+	{
+		AstUnit unit("{()}");
+
+		ASSERT_EQ(unit.size(), 1);
+		ASSERT_EQ(unit.type, unit.GenericGroup);
+		ASSERT_EQ(unit[0].size(), 1);
+		ASSERT_EQ(unit[0].type, unit.Braces);
+		ASSERT_EQ(unit[0][0].type, unit.Parenthesis);
+	}
+
+
+	{
+		SimpleLexer lexer;
+		AstUnit unit; //This seems to be difficult to the ast-parser
+		auto tokens = lexer.tokenize("( () {}  )");
+		for (auto &it: tokens) {
+			unit.children.push_back(std::shared_ptr<AstUnit>(new AstUnit(it)));
+		}
+		unit.type = unit.GenericGroup;
+		unit.groupByParenthesis();
+		unit.print(std::cout);
+
+		ASSERT_EQ(unit.size(), 1);
+		ASSERT_EQ(unit.type, unit.GenericGroup);
+		ASSERT_EQ(unit[0].size(), 2);
+		ASSERT_EQ(unit[0].type, unit.Parenthesis);
+		ASSERT_EQ(unit[0][0].type, unit.Parenthesis);
+		ASSERT_EQ(unit[0][1].type, unit.Braces);
+	}
 }
 
 TEST_CASE("function test") {
@@ -115,7 +147,7 @@ TEST_CASE("keyword test") {
 
 TEST_CASE("semicolon separated statements") {
 	AstUnit unit("x = 1; y = 2");
-	unit.print(std::cout);
+//	unit.print(std::cout);
 	ASSERT_EQ(unit[0].type, unit.BinaryStatement);
 	ASSERT_EQ(unit[1].type, unit.Semicolon);
 	ASSERT_EQ(unit[2].type, unit.BinaryStatement);
@@ -233,7 +265,7 @@ TEST_CASE("basic object tests") {
 	{
 		AstUnit unit("{}");
 
-		unit.print(std::cout);
+//		unit.print(std::cout);
 
 		ASSERT_EQ(unit.size(), 1);
 		ASSERT_EQ(unit[0].type, unit.Braces);
@@ -242,7 +274,7 @@ TEST_CASE("basic object tests") {
 	{
 		AstUnit unit("x: 10");
 
-		unit.print(std::cout);
+//		unit.print(std::cout);
 
 		ASSERT_EQ(unit.type, unit.ObjectMemberDefinition);
 	}
@@ -251,11 +283,20 @@ TEST_CASE("basic object tests") {
 	{
 		AstUnit unit("x: 10, y: function() {}");
 
-		unit.print(std::cout);
+//		unit.print(std::cout);
 
 		ASSERT_EQ(unit.type, unit.Sequence);
 		ASSERT_EQ(unit[0].type, unit.ObjectMemberDefinition);
 	}
+}
+
+TEST_CASE("function definition as argument") {
+	AstUnit unit("apa ( function() { x = 0 } )");
+
+	unit.print(std::cout);
+	ASSERT_EQ(unit.size(), 2);
+	ASSERT_EQ(unit.type, unit.FunctionCall);
+	unit.print(std::cout);
 }
 
 

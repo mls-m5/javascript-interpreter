@@ -97,8 +97,14 @@ public:
 				}
 				break;
 			case SimpleLexer::Space:
-				returnValue.back().after += word;
-				word.clear();
+				if (returnValue.empty()) {
+					textBefore += word;
+					word.clear();
+				}
+				else {
+					returnValue.back().after += word;
+					word.clear();
+				}
 				return; // Do not add last space as a token
 			case SimpleLexer::Digit:
 				if (!returnValue.empty() && returnValue.back().after.empty() && textBefore.empty()) {

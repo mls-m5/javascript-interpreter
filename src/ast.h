@@ -184,38 +184,7 @@ public:
 
 	void groupByPatterns();
 
-	void groupByParenthesis() {
-		//Todo implement
-		const std::string beginStrings[] = {"{", "(", "["};
-		const std::string endStrings[] = {"}", ")", "]"};
-		const Type parenthesisTypes[] = {Braces, Parenthesis, Bracket};
-
-		for (auto bracketIndex = 0; bracketIndex < 3; ++bracketIndex) {
-			const std::string &beginString = beginStrings[bracketIndex];
-			const std::string &endString = endStrings[bracketIndex];
-			Type parenthesisType = parenthesisTypes[bracketIndex];
-
-			for (int i = children.size() - 1; i >= 0; --i) {
-				AstUnit &c = *children[i];
-				if (c.type == Parenthesis && c.token == beginString) {
-					for (size_t j = i + 1; j < children.size(); ++j) {
-						AstUnit &c2 = *children[j];
-						if (c2.type == Parenthesis && c2.token == endString) {
-							auto ptr = new AstUnit();
-							ptr->token = children[i]->token;
-							ptr->endToken = children[j]->token;
-							ptr->type = parenthesisType;
-							auto it1 = children.begin() + i;
-							auto it2 = children.begin() + j;
-							ptr->children.insert(ptr->children.begin(), it1 + 1, it2);
-							children.erase(it1, it2 + 1);
-							children.insert(it1, AstUnitPtr(ptr));
-						}
-					}
-				}
-			}
-		}
-	}
+	void groupByParenthesis();
 
 	//Get a child unit by type
 	AstUnit *getByType(Type type) {
