@@ -18,6 +18,7 @@ class Lexer {
 public:
 	virtual ~Lexer() {}
 	virtual std::vector<Token> tokenize(std::string) = 0;
+	virtual std::vector<Token> tokenize(std::istream &stream) = 0;
 };
 
 
@@ -58,6 +59,10 @@ public:
 
 	virtual std::vector<Token> tokenize(std::string text) override {
 		std::istringstream ss(text);
+		return tokenize(ss);
+	}
+
+	virtual std::vector<Token> tokenize(std::istream &ss) override {
 		std::vector<Token> returnValue;
 		Token word;
 		std::string textBefore, textAfter;
@@ -92,10 +97,11 @@ public:
 				}
 				break;
 			case SimpleLexer::Space:
-				returnValue.back().after += textAfter;
+				returnValue.back().after += word;
+				word.clear();
 				return; // Do not add last space as a token
 			case SimpleLexer::Digit:
-				if (!returnValue.empty() && returnValue.back().after.empty()) {
+				if (!returnValue.empty() && returnValue.back().after.empty() && textBefore.empty()) {
 					if (returnValue.back().type == Token::Word) {
 						returnValue.back() += word;
 						word.clear();
@@ -135,6 +141,63 @@ public:
 			}
 		};
 
+		auto checkComment = [&word, &c, &ss, &charType, pushWord] () {
+			ss.get(c);
+			if (c == '/') {
+				if (!word.empty()) {
+					if (charType != Space) {
+						pushWord();
+					}
+				}
+
+				word.push_back('/');
+				while (!ss.eof()) {
+					word.push_back(c);
+					ss.get(c);
+					if (c == '\n') {
+						word.push_back('\n');
+						break;
+					}
+				}
+				charType = SimpleLexer::Space;
+				pushWord();
+
+				return true;
+			}
+			else if (c == '*') {
+				//Block comment
+				word.push_back('/');
+
+				while (!ss.eof()) {
+					word.push_back(c);
+					ss.get(c);
+					if (c == '*') {
+						word.push_back(c);
+						if (ss.eof()) {
+							throw "error: got eof when expecting end of comment";
+						}
+						ss.get(c);
+						if (c == '/') {
+							word.push_back(c);
+							break;
+						}
+						else {
+							ss.unget();
+						}
+					}
+
+				}
+				charType = SimpleLexer::Space;
+				pushWord();
+
+				return true;
+			}
+			else {
+				ss.unget(); //False alarm, continue as usual
+				return false;
+			}
+		};
+
 		while (!ss.eof()) {
 			auto ct = getCharType(c);
 			if (ct != charType && !word.empty()) {
@@ -152,6 +215,12 @@ public:
 				pushWord();
 				ss.get(c);
 				continue;
+			}
+			if (c == '/') {
+				if (checkComment()) {
+					ss.get(c);
+					continue;
+				}
 			}
 			word += c;
 			charType = ct;

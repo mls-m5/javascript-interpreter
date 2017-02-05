@@ -76,6 +76,34 @@ TEST_CASE("more advanced tokenizer test") {
 	ASSERT_EQ(tokens.size(), 12);
 }
 
+TEST_CASE("comments") {
+	SimpleLexer lexer;
+	{
+		auto tokens = lexer.tokenize("hej//Comment\n2");
+
+		for (auto it: tokens) {
+			std::cout << it << ", " << it.type << std::endl;
+		}
+
+		ASSERT_EQ(tokens.size(), 2);
+		ASSERT_EQ(tokens[0].type, Token::Word);
+		ASSERT_EQ(tokens[1].type, Token::Number);
+	}
+	{
+
+		auto tokens = lexer.tokenize("hej/*Comment*/2");
+
+		for (auto it: tokens) {
+			std::cout << it << ", " << it.type << std::endl;
+		}
+
+		ASSERT_EQ(tokens.size(), 2);
+		ASSERT_EQ(tokens[0].type, Token::Word);
+		ASSERT_EQ(tokens[1].type, Token::Number);
+	}
+
+}
+
 TEST_SUIT_END
 
 

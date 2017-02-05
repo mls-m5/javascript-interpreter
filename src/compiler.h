@@ -22,6 +22,11 @@ public:
 		return compile(unit);
 	}
 
+	static StatementPointer compile(std::istream &stream) {
+		AstUnit unit(stream);
+		return compile(unit);
+	}
+
 	static StatementPointer compile(AstUnit& unit);
 
 	static StatementPointer createBinaryStatement(AstUnit& unit);

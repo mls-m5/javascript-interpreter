@@ -143,6 +143,12 @@ public:
 		*this = tokens;
 	}
 
+	AstUnit(std::istream &stream) {
+		SimpleLexer lexer;
+		auto tokens = lexer.tokenize(stream);
+		*this = tokens;
+	}
+
 	void print(std::ostream &out, int intent = 0) {
 		for (int i = 0; i < intent; ++i) {
 			out << "	";

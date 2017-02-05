@@ -1,7 +1,8 @@
 
 #include "virtualmachine.h"
 #include "lexer.h"
-#include <sstream>
+//#include <sstream>
+#include <fstream>
 #include "compiler.h"
 
 using namespace std;
@@ -98,12 +99,27 @@ vector<Statement *> statements;
 //	}
 //};
 
+int parseFile(string fname) {
+	ifstream file(fname);
+
+	auto statement = Compiler::compile(file);
+	statement->run(window);
+}
+
 
 int main(int argc, char const *argv[])
 {
 	cout << "mjavascript 0.0003" << endl;
 
 //	SimpleInterpreter interpreter;
+
+	if (argc > 1) {
+		parseFile(argv[1]);
+
+		return 0;
+	}
+
+
 	auto handleErrors = true;
 
 	vector<StatementPointer> statements;
