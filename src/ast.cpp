@@ -122,8 +122,10 @@ vector<pair<set<string>, Type>> AstUnit::keywordMap {
 
 //Defines the way lots of the expressions is grouped
 vector<PatternRule> AstUnit::patterns = {
-	{{FunctionKeyword, {Word, Name}, {Parenthesis, Arguments}, Braces}, Function},
-	{{FunctionKeyword, {Parenthesis, Arguments}, Braces}, Function},
+	{{FunctionKeyword, {Word, Name}, {Parenthesis, Arguments}, {Braces, Statement}}, Function},
+	//{{SwitchKeyword, {Parenthesis, Arguments}, Braces}, Function}, //Uncomment when implementing
+	{{FunctionKeyword, {Parenthesis, Arguments}, {Braces, Statement}}, Function},
+	{{ForKeyword, Parenthesis, {Braces, Statement}}, ForLoop},
 	{{ForKeyword, Parenthesis, Any}, ForLoop},
 	{{WhileKeyword, {Parenthesis, Condition}, Any}, WhileLoop},
 	{{IfKeyword, {Parenthesis, Condition}, Any}, IfStatement},
@@ -154,6 +156,12 @@ vector<PatternRule> AstUnit::patterns = {
 	{{Any, Or, Any}, BinaryStatement}, //5
 	{{Any, QuestionMark, Any, Colon, Any}, Conditional, PatternRule::RightToLeft}, //4
 	{{Any, AssignmentOperator, Any}, BinaryStatement, PatternRule::RightToLeft}, //3
+
+	//Object member
+	{{Any, Colon, Any}, ObjectMemberDefinition},
+//	{{Any, Any, Colon}, CaseLabel}, //Uncomment when implementing
+
+
 	{{Any, Coma, Any}, Sequence}, //3
 
 	//Variable declarations

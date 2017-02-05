@@ -339,6 +339,18 @@ TEST_CASE("identifier test") {
 	runGarbageCollection();
 }
 
+TEST_CASE("object test") {
+	VariableGuard g("x");
+	auto objectDeclaration = Compiler::compile("var x = {x: 1, y: 2, z: 3}");
+
+	auto ret = objectDeclaration->run(window).getObject();
+
+
+	ASSERT(ret, "not an object");
+	std::cout << ret->toString() << std::endl;
+	ASSERT_EQ(ret->getVariable("x").toString(), "1");
+}
+
 
 TEST_SUIT_END
 

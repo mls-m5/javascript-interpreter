@@ -28,6 +28,7 @@ public:
 		Parenthesis,
 		Bracket,
 		Braces,
+		Statement, //Like braces, but you know from the context that is is not a object eg if() {}
 		Identifier, //Phony type that means Word, PropertyAccessor or Paranthesis
 
 		Function,
@@ -49,11 +50,13 @@ public:
 
 		PropertyAccessor,
 		ComputedMemberAccess,
-		PostfixStatement,
-		PrefixStatement,
+		PostfixStatement, //i++ etc
+		PrefixStatement, //--i etc
 		BinaryStatement,
 		DeleteStatement,
 		ExponentiationStatement,
+		ObjectMemberDefinition, //with colon, for example {x: 3}
+//		CaseLabel, //for use in switch statements
 
 		Period,
 		NewKeyword, //18 with function call
@@ -218,6 +221,29 @@ public:
 		return nullptr;
 	}
 
+	//Returns the first child that is not of sequence type
+	Type getFirstSequenceType() {
+		if (type != Sequence) {
+			return type;
+		}
+		return front().getFirstSequenceType();
+	}
+
+	//Summarizes the sequence to a plain list
+	std::vector<AstUnitPtr> getFlatSequence() {
+		std::vector<AstUnitPtr> ret;
+		if (type == Sequence) {
+			auto l1 = front().getFlatSequence();
+			ret.insert(ret.end(), l1.begin(), l1.end());
+			auto l2 = back().getFlatSequence();
+			ret.insert(ret.end(), l2.begin(), l2.end());
+		}
+		else {
+			ret.insert(ret.end(), shared_from_this());
+		}
+		return ret;
+	}
+
 	//Get the statement after a special statement
 	//for example the statement after the keyword else
 	AstUnit *getAfterToken(Type type) {
@@ -261,7 +287,7 @@ public:
 		if (children.size() == 1) {
 			(*this)[0].groupUnit();
 		}
-		if (type != GenericGroup && type != Parenthesis && type != Braces && type != Condition && type != Arguments) {
+		if (type != GenericGroup && type != Parenthesis && type != Statement && type != Braces && type != Condition && type != Arguments) {
 			return; //The unit is already grouped
 		}
 		groupByParenthesis();
@@ -286,6 +312,18 @@ public:
 
 	AstUnit &get(size_t index) {
 		return *children[index];
+	}
+
+	AstUnit &at(size_t index) {
+		return *children.at(index);
+	}
+
+	AstUnit &front() {
+		return *children.front();
+	}
+
+	AstUnit &back() {
+		return *children.back();
 	}
 
 	bool empty() {

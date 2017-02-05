@@ -182,6 +182,12 @@ public:
 	Token name;
 	~FunctionDeclaration() {}
 
+
+	virtual string toString() {
+		return "function";
+	}
+
+
 	//Do special difference except the arguments
 	Value run(ObjectValue &context) override {
 		if (!name.empty()) {
@@ -282,6 +288,25 @@ public:
 		}
 	}
 };
+
+
+class ObjectDefinition: public Statement {
+public:
+	//The first must be a literal statement
+	vector<std::pair<StatementPointer, StatementPointer>> declarationPairs;
+
+	Value run(ObjectValue &context) override {
+		auto object = new ObjectValue();
+
+		for (auto it: declarationPairs) {
+			object->setVariable(it.first->toString(), it.second->run(context));
+		}
+
+		return Value(*object);
+	}
+};
+
+
 
 void runGarbageCollection();
 

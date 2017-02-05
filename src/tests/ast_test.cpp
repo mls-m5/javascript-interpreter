@@ -229,5 +229,34 @@ TEST_CASE("simple group test") {
 	}
 }
 
+TEST_CASE("basic object tests") {
+	{
+		AstUnit unit("{}");
+
+		unit.print(std::cout);
+
+		ASSERT_EQ(unit.size(), 1);
+		ASSERT_EQ(unit[0].type, unit.Braces);
+	}
+
+	{
+		AstUnit unit("x: 10");
+
+		unit.print(std::cout);
+
+		ASSERT_EQ(unit.type, unit.ObjectMemberDefinition);
+	}
+
+
+	{
+		AstUnit unit("x: 10, y: function() {}");
+
+		unit.print(std::cout);
+
+		ASSERT_EQ(unit.type, unit.Sequence);
+		ASSERT_EQ(unit[0].type, unit.ObjectMemberDefinition);
+	}
+}
+
 
 TEST_SUIT_END

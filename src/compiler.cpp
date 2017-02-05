@@ -41,19 +41,45 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 		break;
 	case unit.GenericGroup:
 	case unit.Condition:
+	case unit.Statement:
 	case unit.Braces: {
 		if (unit.type != unit.Braces && unit.children.size() == 1) {
+			//A condition or a single statement
 			return compile(unit[0]);
 		} else {
 			unit.groupUnit();
-			auto block = new CodeBlock();
-			for (auto& u : unit) {
-				auto s = compile(*u);
-				if (s) {
-					block->statements.push_back(s);
+//			unit.print(std::cout);
+			//Check if the unit represents a object
+			//i.e if the braces is empty or the first element is on the form x: y or
+			if (unit.type == unit.Braces &&
+					(unit.empty() || unit[0].getFirstSequenceType() == unit.ObjectMemberDefinition)) {
+//				std::cout << "declare object";
+				auto objectDeclaration = new ObjectDefinition();
+
+				auto sequenceList = unit[0].getFlatSequence();
+
+				for (auto it: sequenceList) {
+					if (it->type != unit.ObjectMemberDefinition) {
+						throw CompilationException(unit.token, "unexpected token in object declaration: " + it->token);
+					}
+					if (it->size() != 3) {
+						throw CompilationException(it->token, "wrong format in object declaration");
+					}
+					objectDeclaration->declarationPairs.push_back({compile(it->front()), compile(it->back())});
 				}
+
+				statement = objectDeclaration;
 			}
-			statement = block;
+			else {
+				auto block = new CodeBlock();
+				for (auto& u : unit) {
+					auto s = compile(*u);
+					if (s) {
+						block->statements.push_back(s);
+					}
+				}
+				statement = block;
+			}
 		}
 	}
 		break;
@@ -137,12 +163,15 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 			}
 		}
 
-		if (auto block = unit.getByType(unit.Braces)) {
+		if (auto block = unit.getByType(unit.Statement)) {
 			block->groupUnit();
 			auto functionBlock = new FunctionBlock();
 			functionBlock->block = compile(*block);
 			functionBlock->argumentNames = argumentNames;
 			f->block.reset(functionBlock);
+		}
+		else {
+			throw "no body defined for function";
 		}
 		statement = f;
 	}
