@@ -132,9 +132,9 @@ vector<PatternRule> AstUnit::patterns = {
 //	{{IfStatement, ElseKeyword, IfKeyword, {Parenthesis, Condition}, Any}, IfStatement}, //Is grouped as a else and a if statement
 	{{IfStatement, ElseKeyword, Any}, IfStatement}, //Append else statement
 
-
 	{{Any, Period, {Word, String}}, PropertyAccessor}, //19
-	{{Any, Bracket}, PropertyAccessor}, //19
+	{{Any, {Bracket, AccessorBrackets}}, PropertyAccessor}, //19
+	{{{Bracket, ArrayBrackets}}, Array},
 	{{NewKeyword, Any, {Parenthesis, Arguments}}, NewStatement}, //19: new with arguments
 	{{Identifier, {Parenthesis, Arguments}}, FunctionCall}, //Precence 18
 	{{Function, {Parenthesis, Arguments}}, FunctionCall}, //Precence 18
@@ -256,7 +256,7 @@ void AstUnit::groupByPatterns() {
 	for (size_t pi = 0; pi < patterns.size(); ++pi) {
 		auto &rule = patterns[pi];
 		auto &pattern = rule.first;
-		//Do the pattern recogniction in different directions dependent on associativity
+		//Do the pattern recognition in different directions dependent on associativity
 		if (rule.associativity == rule.LeftToRight) {
 			for (offset = 0; offset <= children.size() - pattern.size() && pattern.size() <= children.size(); ++offset) {
 				auto action = f(pattern, pi);

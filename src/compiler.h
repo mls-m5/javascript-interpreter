@@ -27,9 +27,9 @@ public:
 		return compile(unit);
 	}
 
-	static void run(std::string text, ObjectValue &context) {
+	static Value run(std::string text, ObjectValue &context) {
 		auto statement = compile(text);
-		statement->run(context);
+		return statement->run(context);
 	}
 
 	static StatementPointer compile(AstUnit& unit);

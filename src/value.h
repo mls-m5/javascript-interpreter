@@ -505,7 +505,6 @@ public:
 	}
 
 	void setActive() {
-
 	}
 
 	struct ActivationGuard {

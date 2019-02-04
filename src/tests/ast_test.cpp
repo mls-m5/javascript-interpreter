@@ -299,5 +299,13 @@ TEST_CASE("function definition as argument") {
 	unit.print(std::cout);
 }
 
+TEST_CASE("property accessor vs array") {
+	AstUnit unit("b [3]");
+	AstUnit unit2("[1, 2, 3]");
+
+	ASSERT_EQ(unit.type, unit.PropertyAccessor);
+	ASSERT_EQ(unit2.type, unit.Array);
+}
+
 
 TEST_SUIT_END

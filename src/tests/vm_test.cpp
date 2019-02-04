@@ -88,19 +88,20 @@ TEST_CASE("delete statement") {
 }
 
 TEST_CASE("property accessor") {
+	VariableGuard g("apa");
 	ObjectValue object;
 	object.defineVariable("x", "heej");
 
 	window.setVariable("apa", object);
 
-	PropertyAccessor accessor("apa", "x");
+	//PropertyAccessor accessor("apa", "x");
+	auto value = Compiler::run("apa.x", window);
 
-	auto value = accessor.run(window);
 	ASSERT_EQ(value.toString(), "heej");
 
-	window.deleteVariable("apa");
-	runGarbageCollection();
+	auto value2 = Compiler::run("apa['x']", window);
 
+	ASSERT_EQ(value2.toString(), "heej");
 }
 
 
