@@ -1,0 +1,6 @@
+*.o
+*_test
+*.cproject
+*.project
+mjavascript
+.settings/
