@@ -27,6 +27,11 @@ public:
 		return compile(unit);
 	}
 
+	static void run(std::string text, ObjectValue &context) {
+		auto statement = compile(text);
+		statement->run(context);
+	}
+
 	static StatementPointer compile(AstUnit& unit);
 
 	static StatementPointer createBinaryStatement(AstUnit& unit);

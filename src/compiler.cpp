@@ -56,16 +56,17 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 //				std::cout << "declare object";
 				auto objectDeclaration = new ObjectDefinition();
 
-				auto sequenceList = unit[0].getFlatSequence();
-
-				for (auto it: sequenceList) {
-					if (it->type != unit.ObjectMemberDefinition) {
-						throw CompilationException(unit.token, "unexpected token in object declaration: " + it->token);
+				if (!unit.empty()) {
+					auto sequenceList = unit[0].getFlatSequence();
+					for (auto it: sequenceList) {
+						if (it->type != unit.ObjectMemberDefinition) {
+							throw CompilationException(unit.token, "unexpected token in object declaration: " + it->token);
+						}
+						if (it->size() != 3) {
+							throw CompilationException(it->token, "wrong format in object declaration");
+						}
+						objectDeclaration->declarationPairs.push_back({compile(it->front()), compile(it->back())});
 					}
-					if (it->size() != 3) {
-						throw CompilationException(it->token, "wrong format in object declaration");
-					}
-					objectDeclaration->declarationPairs.push_back({compile(it->front()), compile(it->back())});
 				}
 
 				statement = objectDeclaration;

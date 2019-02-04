@@ -351,6 +351,13 @@ TEST_CASE("object test") {
 	ASSERT_EQ(ret->getVariable("x").toString(), "1");
 }
 
+TEST_CASE("empty object") {
+	VariableGuard g("x");
+	Compiler::run("var x = {}", window);
+
+	//The test is that the program should not crash
+}
+
 TEST_CASE("function as arguments") {
 	VariableGuard g({"x", "apa"});
 	auto statement = Compiler::compile("var x = 0; function apa(x) {x()}; apa(function() {x = 2});");
