@@ -535,7 +535,19 @@ public:
 	}
 
 	string toString() override {
-		return "<function>";
+		stringstream ss;
+		ss << "function ( ";
+		bool first = true;
+		for (const auto &name: *argumentNames) {
+			if (!first) {
+				ss << ", ";
+			}
+			first = false;
+			ss << name;
+		}
+		ss << " ) { ... }";
+
+		return ss.str();
 	}
 };
 
