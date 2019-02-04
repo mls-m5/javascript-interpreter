@@ -24,10 +24,6 @@ void* ObjectValue::operator new(std::size_t sz) {
 
 
 void runGarbageCollection() {
-//	for (auto &ptr: javascriptMemory) {
-//		ptr->alive = false;
-//	}
-
 	window.alive = false; //Prepare window for algorithm
 	window.mark();
 

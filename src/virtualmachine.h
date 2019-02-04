@@ -14,14 +14,6 @@
 
 #include "value.h"
 
-class Callable {
-public:
-	virtual ~Callable() {}
-
-	virtual Value call(ObjectValue &context, class Value &arguments) {
-		throw "cannot call statement";
-	}
-};
 
 class BinaryStatement: public Statement {
 public:
@@ -139,7 +131,7 @@ public:
 	string identifier;
 };
 
-class CodeBlock: public Statement, public Callable {
+class CodeBlock: public Statement {
 public:
 	~CodeBlock() {}
 	vector<StatementPointer> statements;
@@ -154,32 +146,15 @@ public:
 	}
 };
 
-//A class that manages function argument names
-class FunctionBlock: public Statement {
-public:
-	vector<Token> argumentNames;
 
-	StatementPointer block;
-
-
-	Value run(ObjectValue &context) override {
-		Value arguments = context.getVariable("arguments");
-		if (auto o = arguments.getObject()) {
-			for (int i = 0; i < argumentNames.size(); ++i) {
-				Value index(i);
-				auto argument = o->getVariable(index.toString());
-				context.setVariable(argumentNames[i], argument, true);
-			}
-		}
-		return block->run(context);
-	}
-};
 
 class FunctionDeclaration: public Statement {
 public:
 	StatementPointer block;
 
 	Token name;
+	shared_ptr<vector<Token>> argumentNames;
+
 	~FunctionDeclaration() {}
 
 
@@ -187,13 +162,13 @@ public:
 		return "function";
 	}
 
-
 	//Do special difference except the arguments
 	Value run(ObjectValue &context) override {
+		Value function(new Function(context, block, argumentNames));
 		if (!name.empty()) {
-			context.setVariable(name, *block);
+			context.setVariable(name, function);
 		}
-		return *block;
+		return function;
 	}
 };
 

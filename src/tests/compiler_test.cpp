@@ -13,7 +13,7 @@ TEST_SUIT_BEGIN
 
 TEST_CASE("Simple conversion test") {
 	{
-		StatementPointer statement = Compiler::compile("function apa() {}");
+		auto statement = Compiler::compile("function apa() {}");
 
 		auto f = dynamic_cast<FunctionDeclaration*> (statement.get());
 

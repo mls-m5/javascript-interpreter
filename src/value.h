@@ -18,6 +18,7 @@ using namespace std;
 
 static constexpr const double NaN = numeric_limits<double>::quiet_NaN();
 static constexpr const double Infinity = numeric_limits<double>::infinity();
+class Function;
 
 class Value {
 public:
@@ -43,9 +44,6 @@ public:
 			break;
 		case Boolean:
 			boolValue = value.boolValue;
-			break;
-		case StatementPointer:
-			statementPtr = value.statementPtr;
 			break;
 		case Reference:
 			referencePtr = value.referencePtr;
@@ -106,10 +104,9 @@ public:
 		setValue(value);
 	}
 
-	Value (class Statement &value) {
+	Value (class ObjectValue *value) {
 		setValue(value);
 	}
-
 
 	//Declared after object value
 	Value run(class ObjectValue& context);
@@ -145,14 +142,12 @@ public:
 		return *this;
 	}
 
+	Value setValue(class ObjectValue *value) {
+		return setValue(*value);
+	}
+
 	Value setValue(class ObjectValue &value);
 
-	Value setValue(class Statement &value) {
-		clear();
-		type = StatementPointer;
-		statementPtr = &value;
-		return *this;
-	}
 
 	operator bool();
 
@@ -168,14 +163,6 @@ public:
 		}
 	}
 
-	Statement *getStatement() {
-		if (type == StatementPointer) {
-			return statementPtr;
-		}
-		else {
-			return nullptr;
-		}
-	}
 
 #define VALUE_NUMERIC_OPERATOR(op) \
 	Value operator op(Value &v) { \
@@ -308,7 +295,6 @@ public:
 		Symbol,
 		Object,
 		Reference, //Only used for return value
-		StatementPointer,
 	} type = Undefined;
 
 	//All types except objects are immutable objects
@@ -317,7 +303,6 @@ public:
 		double numberValue;
 		class ObjectValue* objectPtr;
 		class StringValue* stringValue;
-		class Statement* statementPtr; //Points to a place in the abstract source tree
 		Value *referencePtr;
 		long intValue;
 	};
@@ -327,6 +312,13 @@ extern Value UndefinedValue;
 extern class ObjectValue window;
 extern Value windowValue;
 
+// Object value:
+// A special type of value that is handling objects
+// The class is garbage collected and has a custom new operator
+// That means, if a ObjectValue is defined without new keyword,
+// it is not affected by the garbage collector, but if the new keyword is used
+// the object is automatically handled. Delete should therefore _never_ be used
+// on a ObjectValue variable.
 class ObjectValue {
 public:
 	virtual ~ObjectValue() {}
@@ -338,8 +330,8 @@ public:
 	// custom new operator for the object value
 	static void* operator new(std::size_t sz);
 
-	// Mark to not be removed by garbage collector
-	void mark() {
+	// Mark as active by garbage collector
+	virtual void mark() {
 		if (alive) {
 			return; //already marked
 		}
@@ -350,9 +342,16 @@ public:
 				o->mark();
 			}
 		}
+		if (prototype) {
+			prototype->mark();
+		}
 	}
 
-	Value getVariable(string identifier, bool allowReference = true) {
+	virtual Value call(ObjectValue& context, class Value& arguments) {
+		throw runtime_error("object is not a function");
+	}
+
+	virtual Value getVariable(string identifier, bool allowReference = true) {
 		for (auto &it: children) {
 			if (it.first == identifier) {
 				if (allowReference) {
@@ -364,9 +363,9 @@ public:
 			}
 		}
 
-		if (this->parent) {
+		if (this->prototype) {
 			//Continue search
-			return this->parent->getVariable(identifier);
+			return this->prototype->getVariable(identifier);
 		}
 		else {
 			return UndefinedValue; //Undefined
@@ -442,7 +441,7 @@ public:
 	}
 
 	vector<pair<string, Value>> children;
-	ObjectValue *parent = nullptr;
+	ObjectValue *prototype = nullptr;
 	bool alive = true;
 };
 
@@ -459,6 +458,86 @@ public:
 };
 
 #include "statement.h"
+
+class Closure: public ObjectValue {
+public:
+	ObjectValue *parent;
+	Closure(ObjectValue *parent): parent(parent) {
+	}
+
+	~Closure() {}
+
+	void mark() override {
+		ObjectValue::mark();
+		parent->mark();
+	}
+
+	Value getVariable(string identifier, bool allowReference = true) override {
+		auto var = ObjectValue::getVariable(identifier, allowReference);
+		if (var) {
+			return var;
+		}
+		else {
+			if (parent) {
+				return parent->getVariable(identifier, allowReference);
+			}
+			else {
+				return UndefinedValue;
+			}
+		}
+	}
+};
+
+class Function: public ObjectValue {
+public:
+	ObjectValue *definitionContext;
+	shared_ptr<vector<Token>> argumentNames;
+	StatementPointer block;
+	Function(ObjectValue &context, StatementPointer block, shared_ptr<vector<Token>> arguments): definitionContext(&context), block(block), argumentNames(arguments){
+	}
+	Function(ObjectValue &context): definitionContext(&context), block(nullptr) {}
+
+	virtual ~Function() {}
+
+	void mark() override {
+		this->ObjectValue::mark();
+		definitionContext->mark();
+	}
+
+	void setActive() {
+
+	}
+
+	struct ActivationGuard {
+		Function *parent;
+		ActivationGuard(Function *parent): parent(parent) {
+		}
+
+		~ActivationGuard() {
+			parent->setActive();
+		}
+	};
+
+	virtual Value call(ObjectValue &context, Value &arguments) {
+		auto closure = new Closure(definitionContext);
+		closure->defineVariable("arguments", arguments);
+
+		if (auto o = arguments.getObject()) {
+			for (int i = 0; i < argumentNames->size(); ++i) {
+				Value index(i);
+				auto argument = o->getVariable(index.toString());
+				context.setVariable(argumentNames->at(i), argument, true);
+			}
+		}
+
+		ActivationGuard(this); //Activates this function
+		return block->run(*closure);
+	}
+
+	string toString() override {
+		return "<function>";
+	}
+};
 
 class Identifier: public Statement{
 public:
@@ -484,9 +563,7 @@ public:
 
 
 inline Value Value::run(class ObjectValue& context) {
-	if (type == StatementPointer) {
-		return statementPtr->run(context);
-	} else if (type == Object) {
+	if (type == Object) {
 		return objectPtr->run(context);
 	} else if (type == Reference) {
 		return referencePtr->run(context);
@@ -496,10 +573,6 @@ inline Value Value::run(class ObjectValue& context) {
 }
 
 inline Value Value::operator =(const Value& value) {
-//	if (type == Reference) {
-//#error "this seems to be wrong"
-//		*referencePtr = value;
-//	}
 	clear();
 	switch (value.type) {
 	case Object:
@@ -507,9 +580,6 @@ inline Value Value::operator =(const Value& value) {
 		break;
 	case String:
 		stringValue = new StringValue(*value.stringValue);
-		break;
-	case StatementPointer:
-		statementPtr = value.statementPtr;
 		break;
 	case Undefined:
 		break;
@@ -603,11 +673,11 @@ inline double Value::toNumber() {
 }
 
 inline Value Value::call(ObjectValue& context, class Value& arguments) {
-	if (type == StatementPointer) {
-		if (!statementPtr) {
+	if (type == Object) {
+		if (!objectPtr) {
 			throw "trying to call null statement";
 		}
-		return statementPtr->call(context, arguments);
+		return objectPtr->call(context, arguments);
 	} else if (type == Reference) {
 		return referencePtr->call(context, arguments);
 	} else {
@@ -623,8 +693,6 @@ inline string Value::toString() {
 		return stringValue->value;
 	case Object:
 		return objectPtr->toString();
-	case StatementPointer:
-		return statementPtr->toString();
 	case Reference:
 		return referencePtr->toString();
 	case Boolean:

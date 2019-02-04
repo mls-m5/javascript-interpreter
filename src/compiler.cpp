@@ -141,7 +141,9 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 			f->name = name->token;
 		}
 
-		vector<Token> argumentNames;
+		f->argumentNames = make_shared<vector<Token>>();
+
+		vector<Token> &argumentNames(*f->argumentNames.get());
 		//Sum all the arguments to a list
 		if (auto arguments = unit.getByType(unit.Arguments)) {
 			arguments->groupUnit();
@@ -165,10 +167,7 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 
 		if (auto block = unit.getByType(unit.Statement)) {
 			block->groupUnit();
-			auto functionBlock = new FunctionBlock();
-			functionBlock->block = compile(*block);
-			functionBlock->argumentNames = argumentNames;
-			f->block.reset(functionBlock);
+			f->block = StatementPointer(compile(*block));
 		}
 		else {
 			throw "no body defined for function";

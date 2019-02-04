@@ -12,9 +12,9 @@
 
 
 
-typedef std::shared_ptr<Statement> StatementPointer;
+typedef std::shared_ptr<class Statement> StatementPointer;
 
-class Statement{
+class Statement {
 public:
 	virtual ~Statement() {}
 	virtual Value run(ObjectValue &context) {
@@ -23,13 +23,6 @@ public:
 
 	virtual string toString() {
 		return "statement";
-	}
-
-	Value call(ObjectValue &context, Value &arguments) {
-		ObjectValue localContext;
-		localContext.parent = &context;
-		localContext.defineVariable("arguments", arguments);
-		return this->run(localContext);
 	}
 };
 

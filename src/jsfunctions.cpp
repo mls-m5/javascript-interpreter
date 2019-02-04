@@ -11,23 +11,24 @@ ObjectValue window; //Holder for all the local variables
 Value windowValue(window);
 Value UndefinedValue;
 
-class NativeFunction: public FunctionDeclaration {
+class NativeFunction: public Function {
 public:
+	NativeFunction(): Function(window) {}
+
 	string toString() override {
 		return "<native function>";
 	}
 };
 
+
 static class ConsoleLog: public NativeFunction {
-	Value run(ObjectValue &context) override {
-		auto arguments = context.getVariable("arguments", false);
+	virtual Value call(ObjectValue &context, Value &arguments) {
 		if (auto o = arguments.getObject()) {
 			cout << o->getVariable("0").toString() << endl;
 		}
 		else {
-			throw "no arguments to console log";
+			cout << endl;
 		}
-//		cout << arguments.run(context).toString() << endl;
 		return UndefinedValue;
 	}
 

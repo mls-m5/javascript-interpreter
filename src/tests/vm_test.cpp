@@ -93,9 +93,7 @@ TEST_CASE("property accessor") {
 
 	window.setVariable("apa", object);
 
-	Identifier id("apa");
-
-	PropertyAccessor accessor(id, "x");
+	PropertyAccessor accessor("apa", "x");
 
 	auto value = accessor.run(window);
 	ASSERT_EQ(value.toString(), "heej");
@@ -107,15 +105,17 @@ TEST_CASE("property accessor") {
 
 
 TEST_CASE("function call") {
-	class TestFunction: public FunctionDeclaration {
+	class TestFunction: public Function {
 	public:
+		TestFunction() : Function(window){}
 		~TestFunction() {}
 		bool isCalled = false;
 		string argument = "";
 
-		Value run(ObjectValue &context) override {
+
+		virtual Value call(ObjectValue &context, Value &arguments) override {
 			isCalled = true;
-			auto arguments = context.getVariable("arguments");
+			//auto arguments = context.getVariable("arguments");
 			argument = arguments.getObject()->getVariable("0").toString();
 			return Value();
 		}
@@ -129,7 +129,7 @@ TEST_CASE("function call") {
 	functionCall->run(window);
 
 	auto newExpression = window.getVariable("apa", false);
-	auto newFunction = dynamic_cast<TestFunction*>(newExpression.getStatement());
+	auto newFunction = dynamic_cast<TestFunction*>(newExpression.getObject());
 
 	ASSERT(newFunction, "function pointer is null");
 	ASSERT(newFunction->isCalled, "Function is not called");
@@ -351,13 +351,27 @@ TEST_CASE("object test") {
 	ASSERT_EQ(ret->getVariable("x").toString(), "1");
 }
 
-TEST_CASE("function arguments") {
+TEST_CASE("function as arguments") {
 	VariableGuard g({"x", "apa"});
 	auto statement = Compiler::compile("var x = 0; function apa(x) {x()}; apa(function() {x = 2});");
 	statement->run(window);
 
 	auto variable = window.getVariable("x");
 	ASSERT_EQ(variable.toString(), "2");
+}
+
+TEST_CASE("simple closures") {
+	VariableGuard g({"x"});
+	auto statement = Compiler::compile("var x = 0; function apa() {x = 8}; apa()");
+	statement->run(window);
+
+	auto variable = window.getVariable("x");
+	ASSERT_EQ(variable.toString(), "8");
+}
+
+TEST_CASE("console log does not chrash") {
+	auto statement = Compiler::compile("console.log('hej')");
+	statement->run(window);
 }
 
 
