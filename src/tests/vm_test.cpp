@@ -370,16 +370,31 @@ TEST_CASE("function as arguments") {
 
 TEST_CASE("simple closures") {
 	VariableGuard g({"x"});
-	auto statement = Compiler::compile("var x = 0; function apa() {x = 8}; apa()");
-	statement->run(window);
+	Compiler::run("var x = 0; function apa() {x = 8}; apa()", window);
 
 	auto variable = window.getVariable("x");
 	ASSERT_EQ(variable.toString(), "8");
 }
 
 TEST_CASE("console log does not chrash") {
-	auto statement = Compiler::compile("console.log('hej')");
-	statement->run(window);
+	Compiler::run("console.log('hej')", window);
+}
+
+TEST_CASE("protect closures from garbage collector") {
+	VariableGuard g({"x", "f", "f2"});
+	Compiler::run("function f() {var x = 9; return function() {return x}}; var f2 = f;", window);
+
+	runGarbageCollection();
+
+	auto value = Compiler::run("x = f2()", window);
+
+	ASSERT_EQ(value.toString(), "9");
+}
+
+TEST_CASE("function with return statement") {
+	VariableGuard g({"x", "f"});
+	auto value = Compiler::run("function f() {return 4; 8;}; var x = f()", window);
+	ASSERT_EQ(value.toString(), "4");
 }
 
 

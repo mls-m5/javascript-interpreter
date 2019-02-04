@@ -114,6 +114,7 @@ vector<pair<set<string>, Type>> AstUnit::keywordMap {
 	{{"."}, Period},
 	{{"NaN"}, Number},
 	{{"Infinity"}, Number},
+	{{"return"}, Return},
 };
 
 
@@ -170,6 +171,7 @@ vector<PatternRule> AstUnit::patterns = {
 	{{LetKeyword, {BinaryStatement}}, VariableDeclaration},
 	{{VarKeyword, {Word, Name}}, VariableDeclaration},
 	{{VarKeyword, {BinaryStatement}}, VariableDeclaration},
+	{{Return, Any}, ReturnStatement},
 };
 
 AstUnit::Type AstUnit::getKeywordType(Token& token) {

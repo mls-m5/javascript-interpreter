@@ -91,6 +91,21 @@ public:
 	}
 };
 
+
+class ReturnStatement: public Statement {
+public:
+	StatementPointer block;
+
+	~ReturnStatement() {}
+	ReturnStatement(StatementPointer statement): block(statement) {}
+	Value run(ObjectValue &context) override {
+		auto value = block->run(context);
+		value.setReturnFlag();
+		return value;
+	}
+};
+
+
 class PropertyAccessor: public Identifier {
 public:
 	PropertyAccessor(Value object, Value member):
@@ -141,6 +156,9 @@ public:
 		Value ret;
 		for (auto &statement: statements) {
 			ret = statement->run(context);
+			if (ret.isReturn()) {
+				return ret;
+			}
 		}
 		return ret;
 	}

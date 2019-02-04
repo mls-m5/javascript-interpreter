@@ -285,6 +285,18 @@ public:
 
 	void clear();
 
+	void setReturnFlag() {
+		type = (VariableType) (type | ReturnFlag);
+	}
+
+	void resetReturnFlag() {
+		type = (VariableType) (type & ~ReturnFlag); //~Flips all bits
+	}
+
+	bool isReturn() {
+		return type & ReturnFlag;
+	}
+
 	enum VariableType {
 		Boolean,
 		Null,
@@ -294,7 +306,9 @@ public:
 		String,
 		Symbol,
 		Object,
-		Reference, //Only used for return value
+		Reference, //Only used for return value, not for storage
+		ReturnFlag = 1 << 15, //This is special, is set if value is sent through a return-statement
+		NotReturnFlag = ~ReturnFlag,
 	} type = Undefined;
 
 	//All types except objects are immutable objects
@@ -505,6 +519,7 @@ public:
 	}
 
 	void setActive() {
+#warning "implement this"
 	}
 
 	struct ActivationGuard {
@@ -530,7 +545,9 @@ public:
 		}
 
 		ActivationGuard(this); //Activates this function
-		return block->run(*closure);
+		auto ret = block->run(*closure);
+		ret.resetReturnFlag();
+		return ret;
 	}
 
 	string toString() override {
@@ -585,7 +602,7 @@ inline Value Value::run(class ObjectValue& context) {
 
 inline Value Value::operator =(const Value& value) {
 	clear();
-	switch (value.type) {
+	switch (value.type & ~ReturnFlag) {
 	case Object:
 		objectPtr = value.objectPtr;
 		break;

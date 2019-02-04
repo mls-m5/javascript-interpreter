@@ -307,5 +307,10 @@ TEST_CASE("property accessor vs array") {
 	ASSERT_EQ(unit2.type, unit.Array);
 }
 
+TEST_CASE("return statement") {
+	AstUnit unit("return 1");
+	ASSERT_EQ(unit.type, unit.ReturnStatement);
+}
+
 
 TEST_SUIT_END

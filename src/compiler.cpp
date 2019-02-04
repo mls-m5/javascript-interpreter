@@ -176,6 +176,10 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 		statement = f;
 	}
 	break;
+	case unit.ReturnStatement: {
+		statement = new ReturnStatement(compile(unit[1]));
+	}
+	break;
 	case unit.VariableDeclaration: {
 		if (auto name = unit.getByType(unit.Name)) {
 			auto vd = new VariableDeclaration(name->token);
