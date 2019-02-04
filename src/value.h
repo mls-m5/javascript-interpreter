@@ -317,7 +317,7 @@ public:
 		double numberValue;
 		class ObjectValue* objectPtr;
 		class StringValue* stringValue;
-		class Statement* statementPtr; //Points to a placie in the abstract source tree
+		class Statement* statementPtr; //Points to a place in the abstract source tree
 		Value *referencePtr;
 		long intValue;
 	};
@@ -327,7 +327,7 @@ extern Value UndefinedValue;
 extern class ObjectValue window;
 extern Value windowValue;
 
-class ObjectValue{
+class ObjectValue {
 public:
 	virtual ~ObjectValue() {}
 
@@ -337,6 +337,20 @@ public:
 
 	// custom new operator for the object value
 	static void* operator new(std::size_t sz);
+
+	// Mark to not be removed by garbage collector
+	void mark() {
+		if (alive) {
+			return; //already marked
+		}
+		alive = true;
+		for (auto &ptr: children) {
+			auto o = ptr.second.getObject();
+			if (o) {
+				o->mark();
+			}
+		}
+	}
 
 	Value getVariable(string identifier, bool allowReference = true) {
 		for (auto &it: children) {

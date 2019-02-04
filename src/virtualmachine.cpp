@@ -22,18 +22,6 @@ void* ObjectValue::operator new(std::size_t sz) {
 	return ptr;
 }
 
-void markAllChildren(ObjectValue *object) {
-	if (object->alive) {
-		return; //already marked
-	}
-	object->alive = true;
-	for (auto &ptr: object->children) {
-		auto o = ptr.second.getObject();
-		if (o) {
-			markAllChildren(o);
-		}
-	}
-}
 
 void runGarbageCollection() {
 //	for (auto &ptr: javascriptMemory) {
@@ -41,7 +29,7 @@ void runGarbageCollection() {
 //	}
 
 	window.alive = false; //Prepare window for algorithm
-	markAllChildren(&window);
+	window.mark();
 
 	//Remove all that has not been marked as alive
 	auto f = [](const std::unique_ptr<ObjectValue> & value){
