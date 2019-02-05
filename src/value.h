@@ -588,7 +588,7 @@ public:
 			for (int i = 0; i < argumentNames->size(); ++i) {
 				Value index(i);
 				auto argument = o->getVariable(index.toString());
-				context.setVariable(argumentNames->at(i), argument, true);
+				closure->setVariable(argumentNames->at(i), argument, true);
 			}
 		}
 

@@ -21,9 +21,14 @@ public:
 			window.deleteVariable(it);
 		}
 		runGarbageCollection();
+
+		if (window.children.size() > variableCount) {
+			cout << "More variables in window after test --> test is leaking";
+		}
 	}
 
 	vector<string> variables;
+	int variableCount = window.children.size();
 };
 
 TEST_SUIT_BEGIN
@@ -355,7 +360,7 @@ TEST_CASE("function as arguments") {
 }
 
 TEST_CASE("simple closures") {
-	VariableGuard g({"x"});
+	VariableGuard g({"x", "apa"});
 	Compiler::run("var x = 0; function apa() {x = 8}; apa()", window);
 
 	auto variable = window.getVariable("x");
