@@ -93,6 +93,9 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 	case unit.Boolean:
 		statement = new BooleanLiteralStatement(unit.token);
 		break;
+	case unit.This:
+		statement = new ThisStatement;
+		break;
 	case unit.PropertyAccessor:
 	{
 		if (unit.size() == 3) {

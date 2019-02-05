@@ -31,6 +31,7 @@ public:
 		Statement, //Like braces, but you know from the context that is is not a object eg if() {}
 		Identifier, //Phony type that means Word, PropertyAccessor or Paranthesis
 		Return,
+		This,
 
 		Function,
 		Arguments,

@@ -9,7 +9,7 @@
 #include "nativefunction.h"
 #include <functional>
 
-ObjectValue window; //Holder for all the local variables
+Window window; //Holder for all the local variables
 Value windowValue(window);
 Value UndefinedValue;
 

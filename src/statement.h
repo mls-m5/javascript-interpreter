@@ -26,6 +26,12 @@ public:
 	}
 };
 
+class ThisStatement: public Statement {
+	Value run(ObjectValue &context) override {
+		return context.thisPointer();
+	}
+};
+
 //Check here for more info:
 //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar
 class LiteralStatement: public Statement {

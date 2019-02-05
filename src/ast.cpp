@@ -93,6 +93,8 @@ vector<pair<set<string>, Type>> AstUnit::keywordMap {
 	{{"new"}, NewKeyword},
 	{{"let"}, LetKeyword},
 	{{"var"}, VarKeyword},
+	{{"return"}, Return},
+	{{"this"}, This},
 	{{"++", "--"}, PrefixOrPostfix}, //How to separate prefix from the postfix?
 	{{"delete", "typeof", "void", "!"}, Prefix},
 	{{"**"}, ExponentiationOperator},
@@ -114,7 +116,6 @@ vector<pair<set<string>, Type>> AstUnit::keywordMap {
 	{{"."}, Period},
 	{{"NaN"}, Number},
 	{{"Infinity"}, Number},
-	{{"return"}, Return},
 };
 
 

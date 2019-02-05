@@ -408,6 +408,11 @@ TEST_CASE("method call") {
 	ASSERT_EQ(value.toString(), "17");
 }
 
+TEST_CASE("this - simple test") {
+	auto _this = Compiler::run("this").getObject();
+	ASSERT_EQ(_this, &window);
+}
+
 
 TEST_SUIT_END
 

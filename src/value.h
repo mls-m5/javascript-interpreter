@@ -323,9 +323,11 @@ public:
 	};
 };
 
+
+
 extern Value UndefinedValue;
-extern class ObjectValue window;
-extern Value windowValue;
+
+
 
 // Object value:
 // A special type of value that is handling objects
@@ -476,6 +478,22 @@ public:
 	ObjectValue *prototype = Prototype();
 	bool alive = true;
 };
+
+
+
+
+
+class Window: public ObjectValue{
+	ObjectValue *thisPointer() override {
+		return this;
+	}
+};
+
+extern Window window;
+extern Value windowValue;
+
+
+
 
 
 class StringValue {
