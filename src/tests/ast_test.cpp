@@ -312,5 +312,10 @@ TEST_CASE("return statement") {
 	ASSERT_EQ(unit.type, unit.ReturnStatement);
 }
 
+TEST_CASE("object method call") {
+	AstUnit unit("x[2]()");
+	ASSERT_EQ(unit.type, unit.MethodCall);
+}
+
 
 TEST_SUIT_END

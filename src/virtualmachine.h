@@ -266,19 +266,41 @@ public:
 	Value run(ObjectValue &context) override {
 		auto functionValue = identifier->run(context).getValue();//context.getVariable(identifier);
 
-		if (functionValue.type != Value::Undefined) {
-			if (arguments.statements.empty()) {
-				return functionValue.call(context, UndefinedValue);
-			}
-			else {
-				auto args = arguments.run(context);
-				return functionValue.call(context, args);
-			}
-		}
-		else {
-			throw "not a function";
-		}
+		return functionValue.call(
+				context,
+				arguments.run(context),
+				context.thisPointer()
+		);
 	}
+};
+
+
+class MethodCall: public FunctionCall {
+public:
+	StatementPointer object;
+	//Inherit arguments and identifier from FunctionCall
+	MethodCall(StatementPointer object, StatementPointer member, ArgumentStatement arguments):
+		FunctionCall(member),
+		object(object)
+		{
+		this->arguments = arguments;
+	}
+
+	Value run(ObjectValue &context) override {
+		auto obj = object->run(context).getObject();
+		if (obj == nullptr) {
+			throw "trying to call method of non object";
+		}
+
+		auto method = obj->getVariable(identifier->run(context));
+
+		return method.call(
+				context,
+				arguments.run(context),
+				obj
+		);
+	}
+
 };
 
 

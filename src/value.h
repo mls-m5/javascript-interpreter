@@ -280,7 +280,7 @@ public:
 	//Convert a value to a number
 	double toNumber();
 
-	Value call(ObjectValue& context, class Value& arguments);
+	Value call(ObjectValue& context, class Value arguments, ObjectValue *thisPointer);
 
 	string toString();
 
@@ -367,11 +367,14 @@ public:
 	// also accessible through getGetvariable("prototype")
 	static ObjectValue *Prototype();
 
-	virtual Value call(ObjectValue& context, class Value& arguments) {
-		throw runtime_error("object is not a function");
+	virtual ObjectValue *thisPointer() { return nullptr; };
+
+	virtual Value call(ObjectValue& context, class Value& arguments, ObjectValue *thisPointer) {
+		throw RuntimeException("object is not a function");
 	}
 
-	virtual Value getVariable(string identifier, bool allowReference = true) {
+	//Old function
+	virtual Value getVariableStr(string identifier, bool allowReference = true) final {
 		for (auto &it: children) {
 			if (it.first == identifier) {
 				if (allowReference) {
@@ -391,6 +394,12 @@ public:
 			return UndefinedValue; //Undefined
 		}
 	}
+
+	//This function is the one that should be used in the future
+	virtual Value getVariable(Value identifier, bool allowReference = true) {
+		return getVariableStr(identifier.toString(), allowReference);
+	}
+
 
 	vector<pair<string, Value>>::iterator getVariableIterator(string identifier) {
 		for (auto it = children.begin(); it != children.end(); ++it) {
@@ -484,18 +493,26 @@ public:
 
 class Closure: public ObjectValue {
 public:
+	ObjectValue *_this;
 	ObjectValue *parent;
-	Closure(ObjectValue *parent): parent(parent) {
+	Closure(ObjectValue *parent, ObjectValue *_this):
+		_this(_this),
+		parent(parent) {
 	}
 
 	~Closure() {}
 
 	void mark() override {
 		ObjectValue::mark();
-		parent->mark();
+		if (_this) {
+			_this->mark();
+		}
+		if (parent) {
+			parent->mark();
+		}
 	}
 
-	Value getVariable(string identifier, bool allowReference = true) override {
+	Value getVariable(Value identifier, bool allowReference = true) override {
 		auto var = ObjectValue::getVariable(identifier, allowReference);
 
 		if (var.type != var.Undefined) {
@@ -509,6 +526,9 @@ public:
 				return UndefinedValue;
 			}
 		}
+	}
+	ObjectValue *thisPointer() override {
+		return _this;
 	}
 };
 
@@ -542,8 +562,8 @@ public:
 		}
 	};
 
-	virtual Value call(ObjectValue &context, Value &arguments) {
-		auto closure = new Closure(definitionContext);
+	Value call(ObjectValue &context, Value &arguments, ObjectValue *thisPointer) override {
+		auto closure = new Closure(definitionContext, thisPointer);
 		closure->defineVariable("arguments", arguments);
 
 		if (auto o = arguments.getObject()) {
@@ -711,14 +731,14 @@ inline double Value::toNumber() {
 	return NaN;
 }
 
-inline Value Value::call(ObjectValue& context, class Value& arguments) {
+inline Value Value::call(ObjectValue& context, class Value arguments, ObjectValue *thisPointer) {
 	if (type == Object) {
 		if (!objectPtr) {
 			throw "trying to call null statement";
 		}
-		return objectPtr->call(context, arguments);
+		return objectPtr->call(context, arguments, thisPointer);
 	} else if (type == Reference) {
-		return referencePtr->call(context, arguments);
+		return referencePtr->call(context, arguments, thisPointer);
 	} else {
 		throw "value is not callable";
 	}

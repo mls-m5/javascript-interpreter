@@ -36,6 +36,7 @@ public:
 		Arguments,
 		Condition,
 		FunctionCall,
+		MethodCall, //Function call for object members
 		NewStatement,
 		ForLoop,
 		WhileLoop,

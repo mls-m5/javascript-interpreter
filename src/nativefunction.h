@@ -21,7 +21,7 @@ public:
 		return "<native function>";
 	}
 
-	Value call(ObjectValue &context, Value &arguments) override {
+	Value call(ObjectValue &context, Value &arguments, ObjectValue *thisValue) override {
 		if (functionPointer) {
 			return functionPointer(context, arguments);
 		}

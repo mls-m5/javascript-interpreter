@@ -114,7 +114,7 @@ TEST_CASE("function call") {
 		string argument = "";
 
 
-		virtual Value call(ObjectValue &context, Value &arguments) override {
+		virtual Value call(ObjectValue &context, Value &arguments, ObjectValue *_this) override {
 			isCalled = true;
 			//auto arguments = context.getVariable("arguments");
 			argument = arguments.getObject()->getVariable("0").toString();
@@ -213,20 +213,6 @@ TEST_CASE("for loop") {
 	auto variable = window.getVariable("i");
 
 	ASSERT_EQ(variable.toNumber(), 2);
-}
-
-TEST_CASE("property accessor") {
-	auto statement = Compiler::compile("x.y = 2");
-	VariableGuard g("x");
-
-	auto o = new ObjectValue;
-	o->defineVariable("y", "0");
-	window.defineVariable("x", *o);
-
-	statement->run(window);
-
-	auto result = o->getVariable("y");
-	ASSERT_EQ(result.toString(), "2");
 }
 
 TEST_CASE("function declaration") {
@@ -361,8 +347,8 @@ TEST_CASE("empty object") {
 
 TEST_CASE("function as arguments") {
 	VariableGuard g({"x", "apa"});
-	auto statement = Compiler::compile("var x = 0; function apa(x) {x()}; apa(function() {x = 2});");
-	statement->run(window);
+	Compiler::run("var x = 0; function apa(x) {x()};");
+	Compiler::run("apa(function() {x = 2});");
 
 	auto variable = window.getVariable("x");
 	ASSERT_EQ(variable.toString(), "2");
@@ -405,12 +391,21 @@ TEST_CASE("function return local variable") {
 }
 
 TEST_CASE("object prototype") {
-	VariableGuard g({"x", ""});
+	VariableGuard g({"x"});
 	auto value = Compiler::run("{}", window);
 	ASSERT_EQ(value.getObject()->prototype, ObjectValue::Prototype());
 
 	auto toStringFunction = Compiler::run("{}.toString", window);
 	ASSERT(toStringFunction.getObject(), "function not found");
+}
+
+TEST_CASE("method call") {
+	VariableGuard g({"x", "r"});
+	Compiler::run("var r");
+	Compiler::run("var x = {f: function() {r = 17}}");
+	Compiler::run("x.f()");
+	auto value = Compiler::run("r");
+	ASSERT_EQ(value.toString(), "17");
 }
 
 

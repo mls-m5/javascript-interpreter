@@ -21,6 +21,7 @@ static class Initializer {
 public:
 	Initializer() {
 		_initObject();
+		window.prototype = ObjectValue::Prototype();
 
 		auto console = new ObjectValue;
 		console->defineVariable("log", new NativeFunction([](ObjectValue &context, Value &arguments) {

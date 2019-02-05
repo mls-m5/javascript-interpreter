@@ -27,9 +27,14 @@ public:
 		return compile(unit);
 	}
 
-	static Value run(std::string text, ObjectValue &context) {
+	static Value run(std::string text, ObjectValue &context = window) {
 		auto statement = compile(text);
-		return statement->run(context);
+		if (statement) {
+			return statement->run(context);
+		}
+		else {
+			throw "run(): no statement created";
+		}
 	}
 
 	static StatementPointer compile(AstUnit& unit);

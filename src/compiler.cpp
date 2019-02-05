@@ -94,9 +94,22 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 		statement = new BooleanLiteralStatement(unit.token);
 		break;
 	case unit.PropertyAccessor:
+	{
+		if (unit.size() == 3) {
+			return createBinaryStatement(unit);
+		}
+		else if (unit.size() == 2) {
+			if (unit[1].size() != 1 && unit[1][0].size() != 1) {
+				throw CompilationException(unit.createToken(), "Malformed property accessor");
+			}
+			//return StatementPointer(new BinaryStatement(left, right, f->second));
+			return StatementPointer(new BinaryStatement(compile(unit[0]), compile(unit[1][0]), &Value::propertyAccessor));
+		}
+	}
+	break;
 	case unit.BinaryStatement: {
 		if (unit.size() != 3) {
-			throw "failed to create binary statement: wrong number of arguments";
+			throw CompilationException(unit.createToken(), "failed to create binary statement: wrong number of arguments");
 		}
 		return createBinaryStatement(unit);
 	}
@@ -127,13 +140,32 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 		}
 		if (auto argumentUnit = unit.getByType(unit.Arguments)) {
 			if (!argumentUnit->empty()) {
-				cumulate(*argumentUnit->children[0].get(),
+				cumulate(*argumentUnit->children[0],
 						fc->arguments.statements);
 			}
 		}
 		statement = fc;
+		break;
 	}
 	break;
+	case unit.MethodCall: {
+		auto object = compile(unit[0][0]);
+		StatementPointer memberFunction;
+		if (unit[0][1].type == unit.Period) {
+			//if the method is written as x.y()
+			memberFunction = compile(unit[0][2]);
+		}
+		else {
+			//if the method is written as x["y"]
+			memberFunction = compile(unit[0][1][0]);
+		}
+		ArgumentStatement arguments;
+		if (!unit[1].children.empty()) {
+			cumulate(*unit[1].children[0], arguments.statements);
+		}
+		statement = new MethodCall(object, memberFunction, arguments);
+		break;
+	}
 	case unit.Function:
 	{
 		auto f = new FunctionDeclaration();
