@@ -9,6 +9,7 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 #include <sstream>
 #include <limits>
 #include "token.h"
@@ -361,6 +362,11 @@ public:
 		}
 	}
 
+	static ObjectValue *Root();
+	//The objectprototype used by all other objects,
+	// also accessible through getGetvariable("prototype")
+	static ObjectValue *Prototype();
+
 	virtual Value call(ObjectValue& context, class Value& arguments) {
 		throw runtime_error("object is not a function");
 	}
@@ -455,7 +461,10 @@ public:
 	}
 
 	vector<pair<string, Value>> children;
-	ObjectValue *prototype = nullptr;
+	// prototype represents the x.__proto__ value
+	// not to be confused with the x.prototype value that
+	// is saved as a child of the object
+	ObjectValue *prototype = Prototype();
 	bool alive = true;
 };
 
@@ -488,7 +497,8 @@ public:
 
 	Value getVariable(string identifier, bool allowReference = true) override {
 		auto var = ObjectValue::getVariable(identifier, allowReference);
-		if (var) {
+
+		if (var.type != var.Undefined) {
 			return var;
 		}
 		else {
@@ -518,17 +528,17 @@ public:
 		definitionContext->mark();
 	}
 
-	void setActive() {
-#warning "implement this"
-	}
+	static void setActive(ObjectValue *o); //Implemented in virtualmachine.cpp
 
 	struct ActivationGuard {
-		Function *parent;
-		ActivationGuard(Function *parent): parent(parent) {
+		Closure *closure;
+		Function *self;
+		ActivationGuard(Closure *closure, Function *self): closure(closure), self(self) {
+			setActive(closure);
 		}
 
 		~ActivationGuard() {
-			parent->setActive();
+			setActive(self);
 		}
 	};
 
@@ -544,7 +554,7 @@ public:
 			}
 		}
 
-		ActivationGuard(this); //Activates this function
+		ActivationGuard(closure, this); //Activates this function
 		auto ret = block->run(*closure);
 		ret.resetReturnFlag();
 		return ret;
@@ -654,12 +664,13 @@ inline Value::operator bool() {
 
 inline Value Value::propertyAccessor(Value& v) {
 	if (type == Object) {
-		auto f = objectPtr->getVariableIterator(v.toString());
-		if (f == objectPtr->children.end()) {
-			return UndefinedValue;
-		} else {
-			return &f->second;
-		}
+		return objectPtr->getVariable(v.toString());
+//		auto f = objectPtr->getVariableIterator(v.toString());
+//		if (f == objectPtr->children.end()) {
+//			return UndefinedValue;
+//		} else {
+//			return &f->second;
+//		}
 	} else if (type == Reference) {
 		return referencePtr->propertyAccessor(v);
 	} else {

@@ -6,40 +6,32 @@
  */
 
 #include "virtualmachine.h"
+#include "nativefunction.h"
+#include <functional>
 
 ObjectValue window; //Holder for all the local variables
 Value windowValue(window);
 Value UndefinedValue;
 
-class NativeFunction: public Function {
-public:
-	NativeFunction(): Function(window) {}
 
-	string toString() override {
-		return "<native function>";
-	}
-};
-
-
-static class ConsoleLog: public NativeFunction {
-	virtual Value call(ObjectValue &context, Value &arguments) {
-		if (auto o = arguments.getObject()) {
-			cout << o->getVariable("0").toString() << endl;
-		}
-		else {
-			cout << endl;
-		}
-		return UndefinedValue;
-	}
-
-} consoleLog;
+void _initObject();
 
 
 static class Initializer {
 public:
 	Initializer() {
+		_initObject();
+
 		auto console = new ObjectValue;
-		console->defineVariable("log", consoleLog);
+		console->defineVariable("log", new NativeFunction([](ObjectValue &context, Value &arguments) {
+			if (auto o = arguments.getObject()) {
+				cout << o->getVariable("0").toString() << endl;
+			}
+			else {
+				cout << endl;
+			}
+			return UndefinedValue;
+		}));
 		window.setVariable("console", *console);
 		window.setVariable("window", window);
 	}

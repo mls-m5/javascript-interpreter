@@ -380,13 +380,14 @@ TEST_CASE("console log does not chrash") {
 	Compiler::run("console.log('hej')", window);
 }
 
-TEST_CASE("protect closures from garbage collector") {
+TEST_CASE("function in function to get variable") {
 	VariableGuard g({"x", "f", "f2"});
-	Compiler::run("function f() {var x = 9; return function() {return x}}; var f2 = f;", window);
+	Compiler::run("function f() {var x = 9; return function() {return x}};", window);
+	Compiler::run("var f2 = f();", window);
 
 	runGarbageCollection();
 
-	auto value = Compiler::run("x = f2()", window);
+	auto value = Compiler::run("var x = f2()", window);
 
 	ASSERT_EQ(value.toString(), "9");
 }
@@ -395,6 +396,21 @@ TEST_CASE("function with return statement") {
 	VariableGuard g({"x", "f"});
 	auto value = Compiler::run("function f() {return 4; 8;}; var x = f()", window);
 	ASSERT_EQ(value.toString(), "4");
+}
+
+TEST_CASE("function return local variable") {
+	VariableGuard g({"x", "f"});
+	auto value = Compiler::run("function f() {var ret = 12; return ret;}; var x = f()", window);
+	ASSERT_EQ(value.toString(), "12");
+}
+
+TEST_CASE("object prototype") {
+	VariableGuard g({"x", ""});
+	auto value = Compiler::run("{}", window);
+	ASSERT_EQ(value.getObject()->prototype, ObjectValue::Prototype());
+
+	auto toStringFunction = Compiler::run("{}.toString", window);
+	ASSERT(toStringFunction.getObject(), "function not found");
 }
 
 

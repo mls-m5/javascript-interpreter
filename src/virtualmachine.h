@@ -99,7 +99,7 @@ public:
 	~ReturnStatement() {}
 	ReturnStatement(StatementPointer statement): block(statement) {}
 	Value run(ObjectValue &context) override {
-		auto value = block->run(context);
+		auto value = block->run(context); //Make sure that it is not a reference when returning
 		value.setReturnFlag();
 		return value;
 	}
@@ -263,7 +263,6 @@ public:
 	StatementPointer identifier;
 	ArgumentStatement arguments;
 
-	//Todo make it possible to send arguments
 	Value run(ObjectValue &context) override {
 		auto functionValue = identifier->run(context).getValue();//context.getVariable(identifier);
 
