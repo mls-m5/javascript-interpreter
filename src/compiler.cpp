@@ -7,6 +7,9 @@
 
 #include "compiler.h"
 
+//Check so that the statement is not empty, otherwise throw a Compilation Exception
+#define ASSERT_COMPILATION(statement, astUnit, text) if (!statement) throw CompilationException(astUnit.createToken(), text);
+
 std::map<string, BinaryStatement::MemberPointerType> binaryOperatorFunctionMap = {
 		{"+", &Value::operator+},
 		{"-", &Value::operator-},
@@ -33,7 +36,7 @@ std::map<string, UnaryStatement::MemberPointerType> unaryOperatorFunctionMap = {
 };
 
 
-StatementPointer Compiler::compile(AstUnit& unit) {
+StatementPointer Compiler::compile(AstUnit& unit, bool allowNull) {
 	Statement* statement = nullptr;
 	switch (unit.type) {
 	case unit.Word:
@@ -48,7 +51,6 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 			return compile(unit[0]);
 		} else {
 			unit.groupUnit();
-//			unit.print(std::cout);
 			//Check if the unit represents a object
 			//i.e if the braces is empty or the first element is on the form x: y or
 			if (unit.type == unit.Braces &&
@@ -96,8 +98,47 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 	case unit.This:
 		statement = new ThisStatement;
 		break;
-	case unit.PropertyAccessor:
+	case unit.PropertyAssignment:
 	{
+		if (unit.size() != 1 || unit[0].size() != 3 || unit[0][1].type != unit.AssignmentOperator) {
+			throw CompilationException(unit.createToken(), "error with property assignment");
+		}
+		auto &assignment = unit[0]; //It should contain a assignment part
+
+		auto value = compile(assignment[2]);
+
+		StatementPointer object;
+		StatementPointer member;
+
+		auto &accessor = assignment[0];
+		if (accessor.size() == 2) {
+			//Format x[0] = y
+			object = compile(accessor[0]);
+			if (accessor[1].empty()) {
+				throw CompilationException(unit.createToken(), "no property given in property assignment");
+			}
+			member = compile(accessor[1][0]);
+		}
+		else if (accessor.size() == 3) {
+			//Fromat x.x = y
+			if (accessor[1].type != unit.Period) {
+				throw CompilationException(unit.createToken(), "syntax error in property assignment");
+			}
+			object = compile(accessor[0]);
+			member = compile(accessor[2]);
+		}
+
+		if (!object) {
+			CompilationException(unit.createToken(), "no valid owner object in property assignment");
+		}
+		if (!member) {
+			CompilationException(unit.createToken(), "no valid property in assignment");
+		}
+
+		return StatementPointer(new PropertyAssignment(object, member, value));
+	}
+
+	case unit.PropertyAccessor: {
 		if (unit.size() == 3) {
 			return createBinaryStatement(unit);
 		}
@@ -105,24 +146,16 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 			if (unit[1].size() != 1 && unit[1][0].size() != 1) {
 				throw CompilationException(unit.createToken(), "Malformed property accessor");
 			}
-			//return StatementPointer(new BinaryStatement(left, right, f->second));
+
 			return StatementPointer(new BinaryStatement(compile(unit[0]), compile(unit[1][0]), &Value::propertyAccessor));
 		}
 	}
 	break;
 	case unit.BinaryStatement:
-	case unit.Assignment: {
-		if (unit.size() != 3) {
-			throw CompilationException(unit.createToken(), "failed to create binary statement: wrong number of arguments");
-		}
+	case unit.Assignment:
 		return createBinaryStatement(unit);
-	}
-	case unit.PrefixStatement: {
-		if (unit.size() != 2) {
-			throw CompilationException(unit.createToken(), "prefix statement is of wrong format");
-		}
+	case unit.PrefixStatement:
 		return createPrefixStatement(unit);
-	}
 	case unit.PostfixStatement: {
 		if (unit.size() != 2) {
 			throw CompilationException(unit.createToken(), "postfix statement is of wrong format");
@@ -316,19 +349,25 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 	break;
 	}
 	if (statement == nullptr) {
-		//			throw "statement could not be compiled";
-		std::cout << "warning: zero statement" << endl;
+		if (unit.size() > 0 || !allowNull) {
+			CompilationException(unit.createToken(), "Could not compile command");
+		}
 	}
 	return StatementPointer(statement);
 }
 
 
 StatementPointer Compiler::createBinaryStatement(AstUnit& unit) {
+	if (unit.size() != 3) {
+		throw CompilationException(unit.createToken(), "failed to create binary statement: wrong number of arguments");
+	}
+
 	auto left = compile(unit[0]);
 	auto right = compile(unit[2]);
 	auto middleToken = unit[1].token;
 
 	if (middleToken == "=") {
+		auto left = compile(unit[0]);
 		return StatementPointer(new Assignment(left, right));
 	}
 	else {
@@ -342,6 +381,10 @@ StatementPointer Compiler::createBinaryStatement(AstUnit& unit) {
 }
 
 StatementPointer Compiler::createPrefixStatement(AstUnit& unit) {
+	if (unit.size() != 2) {
+		throw CompilationException(unit.createToken(), "prefix statement is of wrong format");
+	}
+
 	auto statement = compile(unit[1]);
 	auto op = unit[0].token;
 

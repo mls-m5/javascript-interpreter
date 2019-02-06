@@ -50,6 +50,7 @@ public:
 		Array,
 		ArrayBrackets,    //These are so that a expression should not be matched both as a
 		AccessorBrackets, //array and a accessor
+		PropertyAssignment,
 
 		Left,
 		Right,

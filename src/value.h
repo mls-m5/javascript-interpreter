@@ -390,7 +390,7 @@ public:
 
 		if (this->prototype) {
 			//Continue search
-			return this->prototype->getVariable(identifier);
+			return this->prototype->getVariableStr(identifier);
 		}
 		else {
 			return UndefinedValue; //Undefined
@@ -404,13 +404,20 @@ public:
 
 
 	virtual Value getOrDefineVariable(Value identifier, bool allowReference = true) {
-		auto ret = getVariable(identifier, allowReference);
-
-		if (ret.type == ret.Undefined) {
-			return defineVariable(identifier);
+		auto stringIdentifier = identifier.toString();
+		for (auto &it: children) {
+			if (it.first == stringIdentifier) {
+				if (allowReference) {
+					return Value(&it.second); //Returns identifier
+				}
+				else {
+					return it.second;
+				}
+			}
 		}
 
-		return ret;
+		//Do not traverse prototypes if it is a definition
+		return defineVariable(identifier);
 	}
 
 

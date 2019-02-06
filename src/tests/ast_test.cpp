@@ -335,5 +335,10 @@ TEST_CASE("object method call") {
 	ASSERT_EQ(unit.type, unit.MethodCall);
 }
 
+TEST_CASE("property assignment") {
+	AstUnit unit("x.x = 1");
+	ASSERT_EQ(unit.type, unit.PropertyAssignment);
+}
+
 
 TEST_SUIT_END

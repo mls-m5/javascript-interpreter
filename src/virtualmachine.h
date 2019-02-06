@@ -27,7 +27,14 @@ public:
 	BinaryStatement(StatementPointer left, StatementPointer right, MemberPointerType function = nullptr):
 	left(left),
 	right(right),
-	functionPointer(function){}
+	functionPointer(function){
+		if (!left) {
+			throw "expected left part of binary operator";
+		}
+		if (!right) {
+			throw "expected right part of binary operator";
+		}
+	}
 
 
 	Value run(ObjectValue &context) override {
@@ -54,6 +61,37 @@ public:
 	}
 };
 
+class PropertyAssignment: public Statement {
+public:
+	StatementPointer object;
+	StatementPointer member;
+	StatementPointer value;
+	PropertyAssignment(StatementPointer object, StatementPointer member, StatementPointer value):
+		object(object),
+		member(member),
+		value(value)
+	{
+	}
+
+	Value run(ObjectValue &context) override {
+		auto objectPtr = object->run(context).getObject();
+		if (!objectPtr) {
+			throw "no object defined";
+		}
+		auto memberValue = member->run(context);
+		auto evalueatedValue = value->run(context);
+
+		auto memberPtr = objectPtr->getOrDefineVariable(memberValue);
+		if (memberPtr.type == Value::Reference) {
+			*memberPtr.referencePtr = value->run(context);
+			return memberPtr;
+		}
+		else {
+			throw "variable not defined";
+		}
+	}
+};
+
 class Assignment: public BinaryStatement {
 public:
 	Assignment() = default;
@@ -61,7 +99,6 @@ public:
 		BinaryStatement(left, right) {}
 
 	Value run(ObjectValue &context) override {
-		//Todo: in the more performant version this should be calculated in forehand
 		auto variable = left->run(context);
 		auto value = right->run(context);
 		if (variable.type == Value::Reference) {

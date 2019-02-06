@@ -413,9 +413,38 @@ TEST_CASE("method call") {
 	ASSERT_EQ(value.toString(), "17");
 }
 
+TEST_CASE("property assignment") {
+	VariableGuard g({"x"});
+	Compiler::run("var x = {}");
+	Compiler::run("x.apa = 23");
+	Compiler::run("x['bepa'] = 24");
+	auto value = Compiler::run("x.apa");
+	auto value2 = Compiler::run("x.bepa");
+	ASSERT_EQ(value.toString(), "23");
+	ASSERT_EQ(value2.toString(), "24");
+}
+
 TEST_CASE("this - simple test") {
 	auto _this = Compiler::run("this").getObject();
 	ASSERT_EQ(_this, &window);
+}
+
+
+
+TEST_CASE("property should not affect prototype") {
+	VariableGuard g({"x"});
+
+	Compiler::run("var x = {}");
+	auto x = Compiler::run("x");
+	ObjectValue *o = x.getObject();
+	o->prototype = new ObjectValue();
+	o->prototype->defineVariable("y", 4);
+
+	ASSERT_EQ(Compiler::run("x.y").toString(), "4");
+
+	Compiler::run("x.y = 10");
+
+	ASSERT_EQ(o->prototype->getVariable("y").toString(), "4");
 }
 
 
