@@ -120,6 +120,19 @@ TEST_CASE("for loop") {
 	ASSERT_EQ(unit.type, unit.ForLoop);
 }
 
+TEST_CASE("variable declaration") {
+	{
+		AstUnit unit("var x = 10");
+		ASSERT_EQ(unit.type, unit.VariableDeclaration);
+		ASSERT_EQ(unit[1].type, unit.Assignment);
+	}
+	{
+		AstUnit unit("let x = 10");
+		ASSERT_EQ(unit.type, unit.VariableDeclaration);
+		ASSERT_EQ(unit[1].type, unit.Assignment);
+	}
+}
+
 TEST_CASE("literals") {
 	AstUnit stringUnit("\"hej\"");
 	ASSERT_EQ(stringUnit[0].type, stringUnit.String);
@@ -148,9 +161,9 @@ TEST_CASE("keyword test") {
 TEST_CASE("semicolon separated statements") {
 	AstUnit unit("x = 1; y = 2");
 //	unit.print(std::cout);
-	ASSERT_EQ(unit[0].type, unit.BinaryStatement);
+	ASSERT_EQ(unit[0].type, unit.Assignment);
 	ASSERT_EQ(unit[1].type, unit.Semicolon);
-	ASSERT_EQ(unit[2].type, unit.BinaryStatement);
+	ASSERT_EQ(unit[2].type, unit.Assignment);
 }
 
 TEST_CASE("operator 19") {
@@ -205,10 +218,14 @@ TEST_CASE("binary operator in condition") {
 }
 
 TEST_CASE("operator 3-15 (binary + conditional)") {
-	std::vector<std::string> operators = {"**", "*", "+", "<<", "<", "==", "&", "|", "^", "&&", "||", "="};
+	std::vector<std::string> operators = {"**", "*", "+", "<<", "<", "==", "&", "|", "^", "&&", "||"};
 	for (auto op: operators){
 		AstUnit unit("apa " + op + " bepa");
 		ASSERT_EQ(unit.type, unit.BinaryStatement);
+	}
+	{
+		AstUnit unit("x = y");
+		ASSERT_EQ(unit.type, unit.Assignment);
 	}
 	{
 		AstUnit unit("23? x: y");

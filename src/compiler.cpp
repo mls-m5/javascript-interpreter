@@ -110,7 +110,8 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 		}
 	}
 	break;
-	case unit.BinaryStatement: {
+	case unit.BinaryStatement:
+	case unit.Assignment: {
 		if (unit.size() != 3) {
 			throw CompilationException(unit.createToken(), "failed to create binary statement: wrong number of arguments");
 		}
@@ -205,7 +206,7 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 			block->groupUnit();
 			f->block = StatementPointer(compile(*block));
 		}
-		else {
+		if (!f->block) {
 			throw "no body defined for function";
 		}
 		statement = f;
@@ -219,7 +220,7 @@ StatementPointer Compiler::compile(AstUnit& unit) {
 		if (auto name = unit.getByType(unit.Name)) {
 			auto vd = new VariableDeclaration(name->token);
 			statement = vd;
-		} else if (auto assignment = unit.getByType(unit.BinaryStatement)) {
+		} else if (auto assignment = unit.getByType(unit.Assignment)) {
 			//				unit.print(std::cout);
 			if (assignment->size() != 3) {
 				throw CompilationException(assignment->createToken(),
