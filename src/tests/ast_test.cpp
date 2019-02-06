@@ -118,6 +118,7 @@ TEST_CASE("if-statement") {
 TEST_CASE("for loop") {
 	AstUnit unit("for (let x = 0; x < 3; ++x) {console.log(x)}");
 	ASSERT_EQ(unit.type, unit.ForLoop);
+	ASSERT_NE(unit.front().type, unit.ForLoop);
 }
 
 TEST_CASE("literals") {

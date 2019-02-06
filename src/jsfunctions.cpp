@@ -26,7 +26,7 @@ public:
 		auto console = new ObjectValue;
 		console->defineVariable("log", new NativeFunction([](ObjectValue &context, Value &arguments) {
 			if (auto o = arguments.getObject()) {
-				cout << o->getVariable("0").toString() << endl;
+				cout << o->getVariable(0) << endl;
 			}
 			else {
 				cout << endl;

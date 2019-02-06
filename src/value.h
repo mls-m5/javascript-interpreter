@@ -403,9 +403,22 @@ public:
 	}
 
 
-	vector<pair<string, Value>>::iterator getVariableIterator(string identifier) {
+	virtual Value getOrDefineVariable(Value identifier, bool allowReference = true) {
+		auto ret = getVariable(identifier, allowReference);
+
+		if (ret.type == ret.Undefined) {
+			return defineVariable(identifier);
+		}
+
+		return ret;
+	}
+
+
+	vector<pair<string, Value>>::iterator getVariableIterator(Value identifier) {
+		auto stringIdentifier = identifier.toString();
+
 		for (auto it = children.begin(); it != children.end(); ++it) {
-			if ((*it).first == identifier) {
+			if ((*it).first == stringIdentifier) {
 				return it;
 			}
 		}
@@ -429,10 +442,10 @@ public:
 	}
 
 	//Declare and throw error if already defined
-	Value defineVariable(string name, Value value = Value()) {
+	virtual Value defineVariable(Value name, Value value = Value()) {
 		auto it = getVariableIterator(name);
 		if (it == children.end()) {
-			children.push_back(pair<string, Value>(name, value));
+			children.push_back(pair<string, Value>(name.toString(), value));
 			return &children.back().second;
 		}
 		else {
@@ -587,7 +600,7 @@ public:
 		if (auto o = arguments.getObject()) {
 			for (int i = 0; i < argumentNames->size(); ++i) {
 				Value index(i);
-				auto argument = o->getVariable(index.toString());
+				auto argument = o->getVariable(index);
 				closure->setVariable(argumentNames->at(i), argument, true);
 			}
 		}
@@ -702,13 +715,7 @@ inline Value::operator bool() {
 
 inline Value Value::propertyAccessor(Value& v) {
 	if (type == Object) {
-		return objectPtr->getVariable(v.toString());
-//		auto f = objectPtr->getVariableIterator(v.toString());
-//		if (f == objectPtr->children.end()) {
-//			return UndefinedValue;
-//		} else {
-//			return &f->second;
-//		}
+		return objectPtr->getVariable(v);
 	} else if (type == Reference) {
 		return referencePtr->propertyAccessor(v);
 	} else {

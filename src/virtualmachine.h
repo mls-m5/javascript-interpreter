@@ -120,7 +120,7 @@ public:
 
 		auto object = variable.getObject();
 		if (object) {
-			return object->getVariable(member.run(context).toString());
+			return object->getVariable(member.run(context));
 		}
 		else {
 			throw "variable is not a object";
