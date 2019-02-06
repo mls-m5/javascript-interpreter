@@ -10,6 +10,8 @@
 #include "../virtualmachine.h"
 #include "../compiler.h"
 
+#include <cstdarg>
+
 //A class that removes the variables when out of scope
 class VariableGuard {
 public:
@@ -23,12 +25,20 @@ public:
 		runGarbageCollection();
 
 		if (window.children.size() > variableCount) {
-			cout << "More variables in window after test --> test is leaking";
+			cout << "More variables in window after test --> test is leaking" << endl;
 		}
+
+		if (getGlobalObjectCount() > globalObjects) {
+			cout << "More global objects in window after test (" << globalObjects << "-->" << getGlobalObjectCount() << ") --> test is leaking" << endl;
+		}
+
+		cout << "global objects at end of test: " << getGlobalObjectCount() << endl;
+		cout.flush();
 	}
 
 	vector<string> variables;
 	int variableCount = window.children.size();
+	int globalObjects = getGlobalObjectCount();
 };
 
 TEST_SUIT_BEGIN
@@ -52,15 +62,13 @@ TEST_CASE("assignnment tests") {
 }
 
 TEST_CASE("simple context test") {
+	VariableGuard g({"bepa", "cepa"});
 	ObjectValue context;
 
 	context.setVariable("bepa", "tja");
 	context.setVariable("cepa", "re");
 	auto value = context.getVariable("bepa");
 	ASSERT_EQ(value.toString(), "tja");
-
-	window.deleteVariable("bepa");
-	window.deleteVariable("cepa");
 }
 
 TEST_CASE("simple assignment expression test") {
@@ -200,13 +208,13 @@ TEST_CASE("unary statements") {
 }
 
 TEST_CASE("while loop") {
+	VariableGuard({"x"});
 	auto statement = Compiler::compile("var x = 0; while (x < 3) { ++x }");
 	statement->run(window);
 
 	auto variable = window.getVariable("x");
 	ASSERT_EQ(variable.toString(), "3");
 
-	window.deleteVariable("x");
 	runGarbageCollection();
 }
 
@@ -264,6 +272,7 @@ TEST_CASE("code block") {
 }
 
 TEST_CASE("binary statements") {
+	VariableGuard g({});
 	{
 		auto statement = Compiler::compile("4 + 5");
 		auto variable = statement->run(window);
@@ -284,7 +293,6 @@ TEST_CASE("binary statements") {
 		auto variable = statement->run(window);
 		ASSERT_EQ(variable.toString(), "true");
 	}
-
 }
 
 TEST_CASE("aritmetic statements") {
