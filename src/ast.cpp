@@ -127,8 +127,8 @@ vector<PatternRule> AstUnit::patterns = {
 	{{FunctionKeyword, {Word, Name}, {Parenthesis, Arguments}, {Braces, Statement}}, Function},
 	//{{SwitchKeyword, {Parenthesis, Arguments}, Braces}, Function}, //Uncomment when implementing
 	{{FunctionKeyword, {Parenthesis, Arguments}, {Braces, Statement}}, Function},
-	{{ForKeyword, Parenthesis, {Braces, Statement}}, ForLoop},
-	{{ForKeyword, Parenthesis, Any}, ForLoop},
+	{{ForKeyword, {Parenthesis, Arguments}, {Braces, Statement}}, ForLoop},
+	{{ForKeyword, {Parenthesis, Arguments}, Any}, ForLoop},
 	{{WhileKeyword, {Parenthesis, Condition}, Any}, WhileLoop},
 	{{IfKeyword, {Parenthesis, Condition}, Any}, IfStatement},
 //	{{IfStatement, ElseKeyword, IfKeyword, {Parenthesis, Condition}, Any}, IfStatement}, //Is grouped as a else and a if statement
