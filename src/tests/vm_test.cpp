@@ -17,6 +17,7 @@ class VariableGuard {
 public:
 	VariableGuard(string variable): variables({variable}) {}
 	VariableGuard(const std::initializer_list<string> variables): variables(variables) {}
+	VariableGuard() {}
 
 	~VariableGuard() {
 		for (auto it: variables) {
@@ -41,10 +42,11 @@ public:
 	int globalObjects = getGlobalObjectCount();
 };
 
+
 TEST_SUIT_BEGIN
 
 
-TEST_CASE("assignnment tests") {
+TEST_CASE("assignment tests") {
 	{
 		VariableGuard g("x");
 		auto statement = Compiler::compile("var x; x = 2");
@@ -455,6 +457,15 @@ TEST_CASE("property should not affect prototype") {
 	ASSERT_EQ(o->prototype->getVariable("y").toString(), "4");
 }
 
+
+TEST_CASE("date") {
+	VariableGuard g;
+	auto date = Compiler::run("Date()");
+
+	ASSERT_EQ(date.type, date.String);
+
+	ASSERT_EQ(Compiler::run("Date.now()").type, date.Integer);
+}
 
 TEST_SUIT_END
 

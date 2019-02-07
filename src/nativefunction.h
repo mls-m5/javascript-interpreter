@@ -21,9 +21,11 @@ public:
 		return "<native function>";
 	}
 
-	Value call(ObjectValue &context, Value &arguments, ObjectValue *thisValue) override {
+	Value call(ObjectValue &context, Value &arguments, ObjectValue *thisPtr) override {
 		if (functionPointer) {
-			return functionPointer(context, arguments);
+//			auto closure = createClosure(arguments, thisPtr);
+//			ActivationGuard(closure, this); //Activates this function
+			return functionPointer(context, arguments).resetReturnFlag();
 		}
 		else {
 			throw "function not implemented";

@@ -34,6 +34,5 @@ void _initObject() {
 	rootPrototype->setVariable("toString", new NativeFunction([](ObjectValue &context, Value &arguments) {
 		return "<string value representation of object, but which object?>";
 	}));
-
 }
 

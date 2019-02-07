@@ -301,7 +301,7 @@ public:
 	ArgumentStatement arguments;
 
 	Value run(ObjectValue &context) override {
-		auto functionValue = identifier->run(context).getValue();//context.getVariable(identifier);
+		auto functionValue = identifier->run(context).getValue();
 
 		return functionValue.call(
 				context,

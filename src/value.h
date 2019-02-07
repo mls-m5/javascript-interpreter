@@ -290,8 +290,9 @@ public:
 		type = (VariableType) (type | ReturnFlag);
 	}
 
-	void resetReturnFlag() {
+	Value &resetReturnFlag() {
 		type = (VariableType) (type & ~ReturnFlag); //~Flips all bits
+		return *this;
 	}
 
 	bool isReturn() {
@@ -533,9 +534,10 @@ class Closure: public ObjectValue {
 public:
 	ObjectValue *_this;
 	ObjectValue *parent;
-	Closure(ObjectValue *parent, ObjectValue *_this):
+	Closure(ObjectValue *parent, Value &arguments, ObjectValue *_this):
 		_this(_this),
 		parent(parent) {
+		defineVariable("arguments", arguments);
 	}
 
 	~Closure() {}
@@ -600,22 +602,29 @@ public:
 		}
 	};
 
-	Value call(ObjectValue &context, Value &arguments, ObjectValue *thisPointer) override {
-		auto closure = new Closure(definitionContext, thisPointer);
-		closure->defineVariable("arguments", arguments);
+	Closure *createClosure(Value &arguments, ObjectValue *thisPointer) {
+		auto closure = new Closure(definitionContext, arguments, thisPointer);
 
 		if (auto o = arguments.getObject()) {
-			for (int i = 0; i < argumentNames->size(); ++i) {
-				Value index(i);
-				auto argument = o->getVariable(index);
-				closure->setVariable(argumentNames->at(i), argument, true);
+			if (argumentNames) {
+				for (int i = 0; i < argumentNames->size(); ++i) {
+					Value index(i);
+					auto argument = o->getVariable(index);
+					closure->setVariable(argumentNames->at(i), argument, true);
+				}
 			}
 		}
 
+		return closure;
+	}
+
+	Value call(ObjectValue &context, Value &arguments, ObjectValue *thisPointer) override {
+		auto closure = createClosure(arguments, thisPointer);
 		ActivationGuard(closure, this); //Activates this function
+
 		auto ret = block->run(*closure);
-		ret.resetReturnFlag();
-		return ret;
+//		ret.resetReturnFlag();
+		return ret.resetReturnFlag();
 	}
 
 	string toString() override {
@@ -772,7 +781,7 @@ inline Value Value::call(ObjectValue& context, class Value arguments, ObjectValu
 	} else if (type == Reference) {
 		return referencePtr->call(context, arguments, thisPointer);
 	} else {
-		throw "value is not callable";
+		throw RuntimeException("value '" + this->toString() + "' is not callable");
 	}
 }
 
