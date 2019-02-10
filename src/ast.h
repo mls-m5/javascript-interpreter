@@ -20,6 +20,7 @@ public:
 	enum Type {
 		None,
 		Any = None,
+		UsedKeyword, //A keyword that is used in a rule, and should not be matched again
 		Word,
 		GenericGroup,
 		Number,

@@ -12,7 +12,7 @@
 
 class NativeFunction: public Function {
 public:
-	std::function<Value (ObjectValue&, Value&)> functionPointer;
+	std::function<Value (ObjectValue&)> functionPointer;
 	NativeFunction(): Function(window) {}
 	NativeFunction(decltype (functionPointer) functionPointer):
 		functionPointer(functionPointer), Function(window) {};
@@ -21,11 +21,10 @@ public:
 		return "<native function>";
 	}
 
-	Value call(ObjectValue &context, Value &arguments, ObjectValue *thisPtr) override {
+	Value call(ObjectValue &context) override {
 		if (functionPointer) {
-//			auto closure = createClosure(arguments, thisPtr);
-//			ActivationGuard(closure, this); //Activates this function
-			return functionPointer(context, arguments).resetReturnFlag();
+//			ActivationGuard(context, this); //Activates this function
+			return functionPointer(context).resetReturnFlag();
 		}
 		else {
 			throw "function not implemented";

@@ -16,17 +16,20 @@ Value UndefinedValue;
 
 void _initObject();
 void _initDate();
+void _initFunction();
 
 
 static class Initializer {
 public:
 	Initializer() {
 		_initObject();
+		_initFunction();
 		_initDate();
 		window.prototype = ObjectValue::Prototype();
 
 		auto console = new ObjectValue;
-		console->defineVariable("log", new NativeFunction([](ObjectValue &context, Value &arguments) {
+		console->defineVariable("log", new NativeFunction([](ObjectValue &context) {
+			auto arguments = context.getArguments();
 			if (auto o = arguments.getObject()) {
 				if (o->children.size() > 0) {
 					cout << o->children[0].second.toString();

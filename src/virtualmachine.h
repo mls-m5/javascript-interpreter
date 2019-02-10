@@ -87,7 +87,7 @@ public:
 			return memberPtr;
 		}
 		else {
-			throw "variable not defined";
+			throw RuntimeException("variable " + memberValue.toString() + " not defined");
 		}
 	}
 };
@@ -106,7 +106,7 @@ public:
 			return variable;
 		}
 		else {
-			throw "variable not defined";
+			throw RuntimeException("variable " + left->toString() + " not defined");
 		}
 	}
 };
@@ -227,6 +227,53 @@ public:
 	}
 };
 
+
+class NewStatement: public Statement {
+public:
+	StatementPointer identifier;
+	StatementPointer arguments;
+
+	NewStatement(StatementPointer identifier, StatementPointer arguments):
+		identifier(identifier),
+		arguments(arguments) {}
+
+	virtual ~NewStatement() {}
+
+	Value run(ObjectValue &context) override {
+		auto creatorObject = identifier->run(context).getObject();
+
+		if (creatorObject) {
+			auto prototype = creatorObject->getVariable("prototype").getObject();
+
+			if (!prototype) {
+				throw RuntimeException("no prototype defined for " + identifier->toString());
+			}
+
+			auto newObject = new ObjectValue(prototype);
+			auto constructor = prototype->getVariable("constructor").getObject();
+			auto argumentsValue = arguments->run(context);
+
+			if (!constructor) {
+				throw RuntimeException("cannot use new on object: No constructor function defined");
+			}
+
+			auto closure = new Closure(constructor->getDefinitionContext(), argumentsValue, newObject);
+			auto returnValue = constructor->call(*closure);
+			if (auto returnObject = returnValue.getObject()) {
+				// If the function returns a object that will be returned instead of the
+				// object used as this
+				return returnObject;
+			}
+			else {
+				return newObject;
+			}
+		}
+		else {
+			throw RuntimeException("could not create new value from non object");
+		}
+	}
+};
+
 class IfStatement: public Statement {
 public:
 	IfStatement(StatementPointer condition, StatementPointer block):
@@ -301,13 +348,15 @@ public:
 	ArgumentStatement arguments;
 
 	Value run(ObjectValue &context) override {
-		auto functionValue = identifier->run(context).getValue();
+		auto functionPtr = identifier->run(context).getObject();
 
-		return functionValue.call(
-				context,
-				arguments.run(context),
-				context.thisPointer()
-		);
+		if (!functionPtr) {
+			throw RuntimeException("trying to call non object/non function");
+		}
+
+		auto closure = new Closure(functionPtr->getDefinitionContext(), arguments.run(context), context.thisPointer());
+
+		return functionPtr->call(*closure);
 	}
 };
 
@@ -329,13 +378,15 @@ public:
 			throw "trying to call method of non object";
 		}
 
-		auto method = obj->getVariable(identifier->run(context));
+		auto method = obj->getVariable(identifier->run(context)).getObject();
 
-		return method.call(
-				context,
-				arguments.run(context),
-				obj
-		);
+		if (!method) {
+			throw RuntimeException("trying to run non object as method");
+		}
+
+		auto closure = new Closure(method->getDefinitionContext(), arguments.run(context), obj);
+
+		return method->call(*closure);
 	}
 
 };

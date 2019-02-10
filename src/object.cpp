@@ -30,8 +30,25 @@ void _initObject() {
 
 	window.setVariable("Object", ObjectValue::Root());
 	object->setVariable("prototype", rootPrototype);
+	object->setVariable("create",  new NativeFunction([](ObjectValue &context) -> Value {
+		auto args = context.getArguments().getObject();
+		if (args && args->children.size() > 0) {
+			if (args->children.size() == 1) {
+				return new ObjectValue(args->children[0].second.getObject());
+			}
+			else {
+				return new ObjectValue(
+						args->children[0].second.getObject(),
+						args->children[1].second.getObject()
+				);
+			}
+		}
+		else {
+			throw RuntimeException("could not create objects without arguments");
+		}
+	}));
 
-	rootPrototype->setVariable("toString", new NativeFunction([](ObjectValue &context, Value &arguments) {
+	rootPrototype->setVariable("toString", new NativeFunction([](ObjectValue &context) {
 		return "<string value representation of object, but which object?>";
 	}));
 }

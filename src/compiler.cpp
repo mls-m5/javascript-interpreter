@@ -100,11 +100,13 @@ StatementPointer Compiler::compile(AstUnit& unit, bool allowNull) {
 		break;
 	case unit.PropertyAssignment:
 	{
-		if (unit.size() != 1 || unit[0].size() != 3 || unit[0][1].type != unit.AssignmentOperator) {
+		if (unit.empty()) {
 			throw CompilationException(unit.createToken(), "error with property assignment");
 		}
-		auto &assignment = unit[0]; //It should contain a assignment part
-
+		auto &assignment = (unit.size() == 1)? unit[0] : unit;
+		if (assignment.size() != 3 || assignment[1].type != unit.AssignmentOperator) {
+			throw CompilationException(unit.createToken(), "error with property assignment");
+		}
 		auto value = compile(assignment[2]);
 
 		StatementPointer object;
@@ -161,6 +163,12 @@ StatementPointer Compiler::compile(AstUnit& unit, bool allowNull) {
 			throw CompilationException(unit.createToken(), "postfix statement is of wrong format");
 		}
 		throw CompilationException(unit.createToken(), "postfix not implemented");
+	}
+	case unit.NewStatement: {
+		auto identifier = compile(unit[1]);
+		auto arguments = compile(*unit.getByType(unit.Arguments), true);
+		statement = new NewStatement(identifier, arguments);
+		break;
 	}
 	case unit.Arguments: {
 		auto s = new ArgumentStatement();

@@ -280,7 +280,7 @@ public:
 	//Convert a value to a number
 	double toNumber();
 
-	Value call(ObjectValue& context, class Value arguments, ObjectValue *thisPointer);
+//	Value call(ObjectValue& context, class Value arguments, ObjectValue *thisPointer);
 
 	string toString();
 
@@ -339,6 +339,17 @@ extern Value UndefinedValue;
 // on a ObjectValue variable.
 class ObjectValue {
 public:
+	ObjectValue() = default;
+	ObjectValue(ObjectValue *prototype): prototype(prototype) {}
+
+	ObjectValue(ObjectValue *prototype, ObjectValue *properties): prototype(prototype)
+	{
+		if (properties) {
+			for (auto &propertyPair: *properties) {
+				setVariable(propertyPair.first, propertyPair.second);
+			}
+		}
+	}
 	virtual ~ObjectValue() {}
 
 	virtual Value run(ObjectValue& context) {
@@ -372,9 +383,14 @@ public:
 
 	virtual ObjectValue *thisPointer() { return nullptr; };
 
-	virtual Value call(ObjectValue& context, class Value& arguments, ObjectValue *thisPointer) {
+	virtual Value getArguments() { return UndefinedValue; };
+
+	virtual Value call(ObjectValue &context) {
 		throw RuntimeException("object is not a function");
 	}
+
+	// For functions returns the context in which they were created
+	virtual ObjectValue *getDefinitionContext() { return nullptr; };
 
 	//Old function
 	virtual Value getVariableStr(string identifier, bool allowReference = true) final {
@@ -436,7 +452,7 @@ public:
 
 	Value setVariable(string identifier, Value value, bool allowUndefined = false) {
 		if (value.type == Value::Undefined && !allowUndefined) {
-			throw RuntimeException("value not defined when setting variable");
+			throw RuntimeException("value " + identifier + " not defined when setting variable");
 		}
 		auto it = getVariableIterator(identifier);
 		if (it == children.end()) {
@@ -492,10 +508,21 @@ public:
 		return ret;
 	}
 
+
+
 	vector<pair<string, Value>> children;
 	// prototype represents the x.__proto__ value
 	// not to be confused with the x.prototype value that
 	// is saved as a child of the object
+
+	inline decltype(children)::iterator begin() {
+		return children.begin();
+	}
+
+	inline decltype(children)::iterator end() {
+		return children.end();
+	}
+
 	ObjectValue *prototype = Prototype();
 	bool alive = true;
 };
@@ -534,13 +561,18 @@ class Closure: public ObjectValue {
 public:
 	ObjectValue *_this;
 	ObjectValue *parent;
-	Closure(ObjectValue *parent, Value &arguments, ObjectValue *_this):
+	Value arguments;
+	Closure(ObjectValue *parent, Value arguments, ObjectValue *_this):
 		_this(_this),
 		parent(parent) {
-		defineVariable("arguments", arguments);
+		this->arguments = defineVariable("arguments", arguments);
 	}
 
 	~Closure() {}
+
+	Value getArguments() override {
+		return arguments;
+	}
 
 	void mark() override {
 		ObjectValue::mark();
@@ -577,9 +609,31 @@ public:
 	ObjectValue *definitionContext;
 	shared_ptr<vector<Token>> argumentNames;
 	StatementPointer block;
-	Function(ObjectValue &context, StatementPointer block, shared_ptr<vector<Token>> arguments): definitionContext(&context), block(block), argumentNames(arguments){
+	Function(ObjectValue &context, StatementPointer block, shared_ptr<vector<Token>> arguments):
+		ObjectValue(Root()->getVariable("prototype").getObject()),
+		definitionContext(&context),
+		block(block),
+		argumentNames(arguments){
+		createPrototypeProperty();
 	}
-	Function(ObjectValue &context): definitionContext(&context), block(nullptr) {}
+	Function(ObjectValue &context):
+		ObjectValue(Root()),
+		definitionContext(&context),
+		block(nullptr) {
+		createPrototypeProperty();
+	}
+
+	void createPrototypeProperty() {
+		auto prototypeProperty = new ObjectValue;
+		setVariable("prototype", prototypeProperty);
+		prototypeProperty->setVariable("constructor", this);
+	}
+
+	ObjectValue *getDefinitionContext() override {
+		return definitionContext;
+	}
+
+	static ObjectValue *Root();
 
 	virtual ~Function() {}
 
@@ -602,27 +656,28 @@ public:
 		}
 	};
 
-	Closure *createClosure(Value &arguments, ObjectValue *thisPointer) {
-		auto closure = new Closure(definitionContext, arguments, thisPointer);
-
+	//Sets the variables to point on the correct arguments
+	void setArguments(ObjectValue &context, Value arguments, ObjectValue *thisPointer) {
 		if (auto o = arguments.getObject()) {
 			if (argumentNames) {
 				for (int i = 0; i < argumentNames->size(); ++i) {
 					Value index(i);
 					auto argument = o->getVariable(index);
-					closure->setVariable(argumentNames->at(i), argument, true);
+					context.setVariable(argumentNames->at(i), argument, true);
 				}
 			}
 		}
-
-		return closure;
 	}
 
-	Value call(ObjectValue &context, Value &arguments, ObjectValue *thisPointer) override {
-		auto closure = createClosure(arguments, thisPointer);
-		ActivationGuard(closure, this); //Activates this function
+	Value call(ObjectValue &context) override {
+		setArguments(
+				context,
+				context.getArguments(),
+				context.thisPointer()
+				);
+		//ActivationGuard(context, this); //Activates this function
 
-		auto ret = block->run(*closure);
+		auto ret = block->run(context);
 //		ret.resetReturnFlag();
 		return ret.resetReturnFlag();
 	}
@@ -772,18 +827,18 @@ inline double Value::toNumber() {
 	return NaN;
 }
 
-inline Value Value::call(ObjectValue& context, class Value arguments, ObjectValue *thisPointer) {
-	if (type == Object) {
-		if (!objectPtr) {
-			throw "trying to call null statement";
-		}
-		return objectPtr->call(context, arguments, thisPointer);
-	} else if (type == Reference) {
-		return referencePtr->call(context, arguments, thisPointer);
-	} else {
-		throw RuntimeException("value '" + this->toString() + "' is not callable");
-	}
-}
+//inline Value Value::call(ObjectValue& context, class Value arguments, ObjectValue *thisPointer) {
+//	if (type == Object) {
+//		if (!objectPtr) {
+//			throw "trying to call null statement";
+//		}
+//		return objectPtr->call(context, arguments, thisPointer);
+//	} else if (type == Reference) {
+//		return referencePtr->call(context, arguments, thisPointer);
+//	} else {
+//		throw RuntimeException("value '" + this->toString() + "' is not callable");
+//	}
+//}
 
 inline string Value::toString() {
 	switch (type) {

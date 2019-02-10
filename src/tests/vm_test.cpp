@@ -129,10 +129,10 @@ TEST_CASE("function call") {
 		string argument = "";
 
 
-		virtual Value call(ObjectValue &context, Value &arguments, ObjectValue *_this) override {
+		virtual Value call(ObjectValue &context) override {
 			isCalled = true;
 			//auto arguments = context.getVariable("arguments");
-			argument = arguments.getObject()->getVariable("0").toString();
+			argument = context.getArguments().getObject()->getVariable("0").toString();
 			return Value();
 		}
 	};
@@ -466,6 +466,42 @@ TEST_CASE("date") {
 
 	ASSERT_EQ(Compiler::run("Date.now()").type, date.Integer);
 }
+
+
+TEST_CASE("Object.create") {
+	VariableGuard g({"x"});
+	Compiler::run("var x = Object.create({x: 31})");
+
+	ASSERT_EQ(Compiler::run("x.x").toString(), "31");
+}
+
+TEST_CASE("function prototype test") {
+	VariableGuard g({"apa"});
+	Compiler::run("function apa() {}");
+	ASSERT(Compiler::run("apa.prototype.constructor == apa"), "wrong constructor");
+	auto apa = Compiler::run("apa").getObject();
+	ASSERT_EQ(apa->prototype, Function::Root()->getVariable("prototype").getObject());
+}
+
+TEST_CASE("new") {
+	VariableGuard g({"x", "apa"});
+
+	Compiler::run("function apa() {this.y = 10}");
+	Compiler::run("let x = new apa()");
+
+	ASSERT_EQ(Compiler::run("x.y").toString(), "10")
+
+	//Running new without assigning it to a variable should not crash
+	Compiler::run("new apa()");
+}
+
+//TEST_CASE("new date") {
+//	VariableGuard g({"x"});
+//
+//	Compiler::run("let x = new Date()");
+//
+//	ASSERT_EQ(Compiler::run("x.getTime()").type, Value::Integer)
+//}
 
 TEST_SUIT_END
 

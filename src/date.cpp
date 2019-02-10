@@ -39,11 +39,12 @@ static long getTimeMillis() {
 void _initDate() {
 	struct Date: public NativeFunction {
 		Date():
-			NativeFunction([this](ObjectValue &context, Value &arguments) {
+			NativeFunction([this](ObjectValue &context) {
 				auto millis = getTimeMillis();
 				if (auto _this = context.thisPointer()) {
-					_this->prototype == this->prototype;
-					context.setVariable("value", getTimeMillis());
+					if (_this->prototype == this->prototype) {
+						_this->setVariable("value", getTimeMillis());
+					}
 				}
 				return Value(getTimeString(millis));
 			}){}
@@ -51,12 +52,12 @@ void _initDate() {
 
 	date = new Date();
 
-	date->setVariable("now", new NativeFunction([](ObjectValue &context, Value &arguments) {
+	date->setVariable("now", new NativeFunction([](ObjectValue &context) {
 		return getTimeMillis();
 	}));
 
 	ObjectValue *prototype = new ObjectValue;
-	prototype->setVariable("getTime", new NativeFunction([](ObjectValue &context, Value &arguments) {
+	prototype->setVariable("getTime", new NativeFunction([](ObjectValue &context) {
 		if (auto _this = context.thisPointer()) {
 			auto millis = context.thisPointer()->getVariable("__internalTime__").toNumber();
 			return getTimeString(millis);

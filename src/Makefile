@@ -1,5 +1,5 @@
 
-objects = main.o virtualmachine.o jsfunctions.o ast.o compiler.o object.o date.o
+objects = main.o virtualmachine.o jsfunctions.o ast.o compiler.o object.o date.o function.o
 CXXFLAGS = -g  -std=c++11 -Isrc/
 target = ../mjavascript
 all: $(objects)
