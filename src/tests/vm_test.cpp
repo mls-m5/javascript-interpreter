@@ -493,15 +493,28 @@ TEST_CASE("new") {
 
 	//Running new without assigning it to a variable should not crash
 	Compiler::run("new apa()");
+
+	//Calling new without arguments should not crash either
+	Compiler::run("new apa");
 }
 
-//TEST_CASE("new date") {
-//	VariableGuard g({"x"});
-//
-//	Compiler::run("let x = new Date()");
-//
-//	ASSERT_EQ(Compiler::run("x.getTime()").type, Value::Integer)
-//}
+TEST_CASE("new.target") {
+	VariableGuard g({"x", "apa"});
+
+	Compiler::run("var x = 0; function apa() {x = new.target}");
+	Compiler::run("apa()");
+	ASSERT(Compiler::run("x").getObject() == nullptr, "new.target should be null but isnt");
+	Compiler::run("new apa()");
+	ASSERT_EQ(Compiler::run("x").getObject(), Compiler::run("apa").getObject());
+}
+
+TEST_CASE("new date object") {
+	VariableGuard g({"x"});
+
+	Compiler::run("let x = new Date()");
+
+	ASSERT_EQ(Compiler::run("x.getTime()").type, Value::Integer)
+}
 
 TEST_SUIT_END
 

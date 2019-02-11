@@ -28,7 +28,7 @@ public:
 
 class ThisStatement: public Statement {
 	Value run(ObjectValue &context) override {
-		return context.thisPointer();
+		return context.getThis();
 	}
 };
 

@@ -61,6 +61,12 @@ public:
 	}
 };
 
+class NewTargetStatement: public Statement {
+	Value run(ObjectValue &context) override {
+		return context.getNewTarget();
+	}
+};
+
 class PropertyAssignment: public Statement {
 public:
 	StatementPointer object;
@@ -251,13 +257,16 @@ public:
 
 			auto newObject = new ObjectValue(prototype);
 			auto constructor = prototype->getVariable("constructor").getObject();
-			auto argumentsValue = arguments->run(context);
+			Value argumentsValue;
+			if (arguments) {
+				auto argumentsValue = arguments->run(context);
+			}
 
 			if (!constructor) {
 				throw RuntimeException("cannot use new on object: No constructor function defined");
 			}
 
-			auto closure = new Closure(constructor->getDefinitionContext(), argumentsValue, newObject);
+			auto closure = new NewClosure(constructor->getDefinitionContext(), argumentsValue, newObject, creatorObject);
 			auto returnValue = constructor->call(*closure);
 			if (auto returnObject = returnValue.getObject()) {
 				// If the function returns a object that will be returned instead of the
@@ -354,7 +363,7 @@ public:
 			throw RuntimeException("trying to call non object/non function");
 		}
 
-		auto closure = new Closure(functionPtr->getDefinitionContext(), arguments.run(context), context.thisPointer());
+		auto closure = new Closure(functionPtr->getDefinitionContext(), arguments.run(context), context.getThis());
 
 		return functionPtr->call(*closure);
 	}

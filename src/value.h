@@ -381,7 +381,9 @@ public:
 	// also accessible through getGetvariable("prototype")
 	static ObjectValue *Prototype();
 
-	virtual ObjectValue *thisPointer() { return nullptr; };
+	virtual ObjectValue *getThis() { return nullptr; };
+
+	virtual ObjectValue *getNewTarget() { return nullptr; }
 
 	virtual Value getArguments() { return UndefinedValue; };
 
@@ -532,7 +534,7 @@ public:
 
 
 class Window: public ObjectValue{
-	ObjectValue *thisPointer() override {
+	ObjectValue *getThis() override {
 		return this;
 	}
 };
@@ -562,6 +564,7 @@ public:
 	ObjectValue *_this;
 	ObjectValue *parent;
 	Value arguments;
+
 	Closure(ObjectValue *parent, Value arguments, ObjectValue *_this):
 		_this(_this),
 		parent(parent) {
@@ -599,8 +602,24 @@ public:
 			}
 		}
 	}
-	ObjectValue *thisPointer() override {
+
+	ObjectValue *getThis() override {
 		return _this;
+	}
+};
+
+//A specialiced closure used for new statements
+class NewClosure: public Closure {
+public:
+	ObjectValue *_newTarget; //the statement new.target
+
+	NewClosure(ObjectValue *parent, Value arguments, ObjectValue *_this, ObjectValue *newTarget):
+		Closure(parent, arguments, _this),
+		_newTarget(newTarget)
+	{}
+
+	ObjectValue *getNewTarget() override {
+		return _newTarget;
 	}
 };
 
@@ -673,7 +692,7 @@ public:
 		setArguments(
 				context,
 				context.getArguments(),
-				context.thisPointer()
+				context.getThis()
 				);
 		//ActivationGuard(context, this); //Activates this function
 

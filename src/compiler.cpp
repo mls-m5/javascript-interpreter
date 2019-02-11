@@ -140,6 +140,8 @@ StatementPointer Compiler::compile(AstUnit& unit, bool allowNull) {
 		return StatementPointer(new PropertyAssignment(object, member, value));
 	}
 
+	case unit.NewTarget:
+		return StatementPointer(new NewTargetStatement);
 	case unit.PropertyAccessor: {
 		if (unit.size() == 3) {
 			return createBinaryStatement(unit);
@@ -166,7 +168,10 @@ StatementPointer Compiler::compile(AstUnit& unit, bool allowNull) {
 	}
 	case unit.NewStatement: {
 		auto identifier = compile(unit[1]);
-		auto arguments = compile(*unit.getByType(unit.Arguments), true);
+		StatementPointer arguments;
+		if (auto argumentUnit = unit.getByType(unit.Arguments)) {
+			arguments = compile(*argumentUnit, true);
+		}
 		statement = new NewStatement(identifier, arguments);
 		break;
 	}

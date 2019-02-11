@@ -40,6 +40,7 @@ public:
 		FunctionCall,
 		MethodCall, //Function call for object members
 		NewStatement,
+		NewTarget, //Requests the value of new.target
 		ForLoop,
 		WhileLoop,
 		IfStatement,

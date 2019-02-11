@@ -134,6 +134,7 @@ vector<PatternRule> AstUnit::patterns = {
 //	{{IfStatement, ElseKeyword, IfKeyword, {Parenthesis, Condition}, Any}, IfStatement}, //Is grouped as a else and a if statement
 	{{IfStatement, ElseKeyword, Any}, IfStatement}, //Append else statement
 
+	{{NewKeyword, {Period, UsedKeyword}, {Word, String}}, NewTarget}, //19
 	{{Any, Period, {Word, String}}, PropertyAccessor}, //19
 	{{Any, {Bracket, AccessorBrackets}}, PropertyAccessor}, //19
 	{{{Bracket, ArrayBrackets}}, Array},

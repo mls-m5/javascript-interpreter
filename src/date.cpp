@@ -32,6 +32,8 @@ static string getTimeString(long ms) {
 	return str;
 }
 
+static const string internalValueName = "__internalTime__";
+
 static long getTimeMillis() {
 	return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 }
@@ -41,9 +43,9 @@ void _initDate() {
 		Date():
 			NativeFunction([this](ObjectValue &context) {
 				auto millis = getTimeMillis();
-				if (auto _this = context.thisPointer()) {
-					if (_this->prototype == this->prototype) {
-						_this->setVariable("value", getTimeMillis());
+				if (context.getNewTarget()) {
+					if (auto _this = context.getThis()) {
+						_this->setVariable(internalValueName, getTimeMillis());
 					}
 				}
 				return Value(getTimeString(millis));
@@ -56,17 +58,27 @@ void _initDate() {
 		return getTimeMillis();
 	}));
 
-	ObjectValue *prototype = new ObjectValue;
+	auto prototype = date->getVariable("prototype").getObject();
+
 	prototype->setVariable("getTime", new NativeFunction([](ObjectValue &context) {
-		if (auto _this = context.thisPointer()) {
-			auto millis = context.thisPointer()->getVariable("__internalTime__").toNumber();
-			return getTimeString(millis);
+		if (auto _this = context.getThis()) {
+			auto millis = context.getThis()->getVariable(internalValueName).toNumber();
+			return millis;
 		}
 		else {
 			throw RuntimeException("cannot call Date.getTime without object");
 		}
 	}));
 
+	prototype->setVariable("toString", new NativeFunction([](ObjectValue &context) {
+		if (auto _this = context.getThis()) {
+			auto millis = _this->getVariable(internalValueName).toNumber();
+			return getTimeString(millis);
+		}
+		else {
+			throw RuntimeException("cannot call Date.toString without object");
+		}
+	}));
 
 	window.setVariable("Date", date);
 }
