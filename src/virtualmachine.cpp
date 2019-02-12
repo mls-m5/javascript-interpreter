@@ -12,7 +12,10 @@
 #include <algorithm>
 
 
-std::vector<std::unique_ptr<ObjectValue>> javascriptMemory;
+static std::vector<std::unique_ptr<ObjectValue>> &javascriptMemory() {
+	static std::vector<std::unique_ptr<ObjectValue>> javascriptMemorySingleton;
+	return javascriptMemorySingleton;
+}
 
 //To protect the running function from being garbage collected
 //This should only be a problem if the gc is running while a function
@@ -23,7 +26,7 @@ ObjectValue *activeFunction;
 void* ObjectValue::operator new(std::size_t sz) {
 //	std::cout << "custom new called for object" << '\n';
 	auto ptr = ::operator new(sz);
-	javascriptMemory.push_back(std::unique_ptr<ObjectValue>((ObjectValue*)ptr));
+	javascriptMemory().push_back(std::unique_ptr<ObjectValue>((ObjectValue*)ptr));
 	return ptr;
 }
 
@@ -45,17 +48,18 @@ void runGarbageCollection() {
 		return !alive;
 	};
 
-	javascriptMemory.erase(
+	javascriptMemory().erase(
 			std::remove_if(
-					javascriptMemory.begin(),
-	                javascriptMemory.end(), f),
-			javascriptMemory.end()
+					javascriptMemory().begin(),
+	                javascriptMemory().end(), f),
+			javascriptMemory().end()
 	);
+
 }
 
 
 int getGlobalObjectCount() {
-	return javascriptMemory.size();
+	return javascriptMemory().size();
 }
 
 Value getGlobalContext() {
