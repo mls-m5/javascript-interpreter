@@ -1,6 +1,7 @@
 tests = $(patsubst %_test.cpp,%_test,$(wildcard *_test.cpp))
 CPPFLAGS = -g -std=c++11
-objects = ../virtualmachine.o ../jsfunctions.o ../ast.o ../compiler.o ../object.o ../date.o ../function.o
+allobjects = ${wildcard ../*.o}
+objects = ${allobjects:../main.o= } #../virtualmachine.o ../jsfunctions.o ../ast.o ../compiler.o ../object.o ../date.o ../function.o
 
 .PHONY: build_objects
 build_objects:
