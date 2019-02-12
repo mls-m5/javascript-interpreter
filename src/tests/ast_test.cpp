@@ -80,6 +80,19 @@ TEST_CASE("function test") {
 	}
 }
 
+TEST_CASE("arrow-function") {
+	{
+		AstUnit unit("x => x * 2");
+		ASSERT_EQ(unit.type, unit.ArrowFunction);
+		ASSERT_EQ(unit.size(), 3);
+	}
+
+	{
+		AstUnit unit("y = x => x * 2");
+		ASSERT_NE(unit.type, unit.ArrowFunction);
+	}
+}
+
 TEST_CASE("if-statement") {
 	{
 		AstUnit unit("if (x) {}");

@@ -103,6 +103,7 @@ vector<pair<set<string>, Type>> AstUnit::keywordMap {
 	{{"<<", ">>"}, BitwiseShiftOperators},
 	{{"<", "<=", ">", ">=", "in", "instanceof"}, Operator11},
 	{{"==", "!=", "===", "!=="}, EqualityOperator},
+	{{"=>"}, Arrow},
 	{{"&"}, BitwiseAnd},
 	{{"^"}, BitwiseXor},
 	{{"|"}, BitwiseOr},
@@ -163,6 +164,7 @@ vector<PatternRule> AstUnit::patterns = {
 	{{Any, And, Any}, BinaryStatement}, //6
 	{{Any, Or, Any}, BinaryStatement}, //5
 	{{Any, QuestionMark, Any, Colon, Any}, Conditional, PatternRule::RightToLeft}, //4
+	{{Any, Arrow, Any}, ArrowFunction },
 	{{PropertyAccessor, AssignmentOperator, Any}, PropertyAssignment, PatternRule::RightToLeft}, //3
 	{{Any, AssignmentOperator, Any}, Assignment, PatternRule::RightToLeft}, //3
 

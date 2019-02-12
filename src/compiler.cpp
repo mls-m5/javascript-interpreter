@@ -6,6 +6,8 @@
  */
 
 #include "compiler.h"
+#include "statement.h"
+#include "virtualmachine.h"
 
 //Check so that the statement is not empty, otherwise throw a Compilation Exception
 #define ASSERT_COMPILATION(statement, astUnit, text) if (!statement) throw CompilationException(astUnit.createToken(), text);
@@ -34,6 +36,77 @@ std::map<string, UnaryStatement::MemberPointerType> unaryOperatorFunctionMap = {
 		{"-", &Value::unaryMinus},
 		{"!", &Value::operator!},
 };
+
+
+static StatementPointer createBinaryStatement(AstUnit& unit) {
+	if (unit.size() != 3) {
+		throw CompilationException(unit.createToken(), "failed to create binary statement: wrong number of arguments");
+	}
+
+	auto left = Compiler::compile(unit[0]);
+	auto right = Compiler::compile(unit[2]);
+	auto middleToken = unit[1].token;
+
+	if (middleToken == "=") {
+		auto left = Compiler::compile(unit[0]);
+		return StatementPointer(new Assignment(left, right));
+	}
+	else {
+		auto f = binaryOperatorFunctionMap.find(middleToken);
+		if (f != binaryOperatorFunctionMap.end()) {
+			return StatementPointer(new BinaryStatement(left, right, f->second));
+		}
+	}
+
+	throw "binary statement not implemented";
+}
+
+
+static StatementPointer createPrefixStatement(AstUnit& unit) {
+	if (unit.size() != 2) {
+		throw CompilationException(unit.createToken(), "prefix statement is of wrong format");
+	}
+
+	auto statement = Compiler::compile(unit[1]);
+	auto op = unit[0].token;
+
+	auto f = unaryOperatorFunctionMap.find(op);
+	if (f != unaryOperatorFunctionMap.end()) {
+		return StatementPointer(new UnaryStatement(statement, f->second));
+	}
+
+	throw "unary statement not implemented";
+}
+
+
+static shared_ptr<vector<Token>> getNamesFromArgumentList(AstUnit *arguments) {
+	auto argumentNames = make_shared<vector <Token>>();
+
+	if (arguments) {
+		arguments->groupUnit();
+
+		if (!arguments->empty()) {
+			if (arguments->size() == 1) {
+				auto &sequence = arguments->get(0);
+				std::function<void (AstUnit&)> sum = [&argumentNames, &sum] (AstUnit &sequence) {
+					if (sequence.type == AstUnit::Sequence) {
+						sum(sequence.get(0));
+						argumentNames->push_back(sequence.get(2).token);
+					}
+					else {
+						argumentNames->push_back(sequence.token);
+					}
+				};
+				sum(sequence);
+			}
+		}
+		else {
+			argumentNames->push_back(arguments->token);
+		}
+	}
+
+	return argumentNames;
+}
 
 
 StatementPointer Compiler::compile(AstUnit& unit, bool allowNull) {
@@ -214,7 +287,6 @@ StatementPointer Compiler::compile(AstUnit& unit, bool allowNull) {
 		statement = fc;
 		break;
 	}
-	break;
 	case unit.MethodCall: {
 		auto object = compile(unit[0][0]);
 		StatementPointer memberFunction;
@@ -243,27 +315,10 @@ StatementPointer Compiler::compile(AstUnit& unit, bool allowNull) {
 
 		f->argumentNames = make_shared<vector<Token>>();
 
+
 		vector<Token> &argumentNames(*f->argumentNames.get());
 		//Sum all the arguments to a list
-		if (auto arguments = unit.getByType(unit.Arguments)) {
-			arguments->groupUnit();
-
-			if (!arguments->empty()) {
-				if (arguments->size() == 1) {
-					auto &sequence = arguments->get(0);
-					std::function<void (AstUnit&)> sum = [&argumentNames, &sum] (AstUnit &sequence) {
-						if (sequence.type == AstUnit::Sequence) {
-							sum(sequence.get(0));
-							argumentNames.push_back(sequence.get(2).token);
-						}
-						else {
-							argumentNames.push_back(sequence.token);
-						}
-					};
-					sum(sequence);
-				}
-			}
-		}
+		f->argumentNames = getNamesFromArgumentList(unit.getByType(unit.Arguments));
 
 		if (auto block = unit.getByType(unit.Statement)) {
 			block->groupUnit();
@@ -273,8 +328,20 @@ StatementPointer Compiler::compile(AstUnit& unit, bool allowNull) {
 			throw "no body defined for function";
 		}
 		statement = f;
+		break;
 	}
-	break;
+	case unit.ArrowFunction: {
+		if (unit.size() != 3) {
+			CompilationException(unit.createToken(), "Wrong format in arrow function");
+		}
+		auto &argumentUnit = unit[0];
+		auto argumentList = getNamesFromArgumentList(&argumentUnit);
+		auto blockUnit = unit[2];
+		auto block = compile(blockUnit);
+		auto arrowToken = unit[1];
+
+		return StatementPointer(new ArrowFunctionDeclaration(argumentList, block, arrowToken.createToken()));
+	}
 	case unit.ReturnStatement: {
 		statement = new ReturnStatement(compile(unit[1]));
 	}
@@ -386,43 +453,4 @@ StatementPointer Compiler::compile(AstUnit& unit, bool allowNull) {
 	return StatementPointer(statement);
 }
 
-
-StatementPointer Compiler::createBinaryStatement(AstUnit& unit) {
-	if (unit.size() != 3) {
-		throw CompilationException(unit.createToken(), "failed to create binary statement: wrong number of arguments");
-	}
-
-	auto left = compile(unit[0]);
-	auto right = compile(unit[2]);
-	auto middleToken = unit[1].token;
-
-	if (middleToken == "=") {
-		auto left = compile(unit[0]);
-		return StatementPointer(new Assignment(left, right));
-	}
-	else {
-		auto f = binaryOperatorFunctionMap.find(middleToken);
-		if (f != binaryOperatorFunctionMap.end()) {
-			return StatementPointer(new BinaryStatement(left, right, f->second));
-		}
-	}
-
-	throw "binary statement not implemented";
-}
-
-StatementPointer Compiler::createPrefixStatement(AstUnit& unit) {
-	if (unit.size() != 2) {
-		throw CompilationException(unit.createToken(), "prefix statement is of wrong format");
-	}
-
-	auto statement = compile(unit[1]);
-	auto op = unit[0].token;
-
-	auto f = unaryOperatorFunctionMap.find(op);
-	if (f != unaryOperatorFunctionMap.end()) {
-		return StatementPointer(new UnaryStatement(statement, f->second));
-	}
-
-	throw "unary statement not implemented";
-}
 

@@ -73,7 +73,12 @@ int main(int argc, char const *argv[])
 			try {
 				auto statement = Compiler::compile(line);
 				statements.push_back(statement);
-				cout << statement->run(window).toString() << endl;
+				if (statement) {
+					cout << statement->run(window).toString() << endl;
+				}
+				else {
+					cerr << "could not compile statement '" << line << "'" << endl;
+				}
 			}
 			catch (const char *e) {
 				cout << e << endl;
@@ -87,7 +92,12 @@ int main(int argc, char const *argv[])
 		}
 		else {
 			auto statement = Compiler::compile(line);
-			statement->run(window);
+			if (statement) {
+				statement->run(window);
+			}
+			else {
+				throw RuntimeException("could not compile statement '" + line + "'");
+			}
 		}
 	}
 }

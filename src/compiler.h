@@ -39,8 +39,6 @@ public:
 
 	static StatementPointer compile(AstUnit& unit, bool allowNull = false);
 
-	static StatementPointer createBinaryStatement(AstUnit& unit);
-	static StatementPointer createPrefixStatement(AstUnit& unit);
 
 private:
 	//Combine binary statements of type sequence to one object

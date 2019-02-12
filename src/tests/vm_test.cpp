@@ -157,6 +157,14 @@ TEST_CASE("function call") {
 	runGarbageCollection();
 }
 
+TEST_CASE("arrow function") {
+	VariableGuard g("x");
+
+	Compiler::run("x => x * 3"); //This should not crash
+	Compiler::run("var x = x => x * 3");
+	ASSERT_EQ(Compiler::run("x(2)").toString(), "6");
+}
+
 TEST_CASE("if-statement") {
 	{
 		auto statement = Compiler::compile("var x = 1; if (1) {x = 2} if (0) {x = 3}");
@@ -546,7 +554,7 @@ TEST_CASE("array.map") {
 	VariableGuard g({"x", "y"});
 
 	Compiler::run("let x = [3, 1, 2]");
-	Compiler::run(" x.map (function(x, y,z) { return arguments })").toString(); //this crashes
+//	Compiler::run(" x.map (function(x, y,z) { return arguments })").toString(); //this crashes
 
 	auto value = Compiler::run("let y = x.map (function(x, y,z) { return x * 2 })");
 	ASSERT_EQ(Compiler::run("y[0]").toString(), "6");

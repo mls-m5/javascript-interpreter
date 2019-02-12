@@ -35,6 +35,7 @@ public:
 		This,
 
 		Function,
+		ArrowFunction,
 		Arguments,
 		Condition,
 		FunctionCall,
@@ -89,6 +90,7 @@ public:
 		//Yield: 2
 		//Spread: Precedence 1
 		Coma, //Precedence 0
+		Arrow, //=>
 
 		Semicolon,
 

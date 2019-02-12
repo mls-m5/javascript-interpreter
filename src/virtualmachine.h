@@ -234,6 +234,19 @@ public:
 	}
 };
 
+class ArrowFunctionDeclaration: public FunctionDeclaration {
+public:
+	ArrowFunctionDeclaration(shared_ptr<vector<Token>> argumentNames, StatementPointer block, Token locationToken) {
+		this->argumentNames = argumentNames;
+		this->block = block;
+		this->name = locationToken;
+	}
+
+	Value run(ObjectValue &context) override {
+		return new Function(context, block, argumentNames);
+	}
+};
+
 
 class NewStatement: public Statement {
 public:
