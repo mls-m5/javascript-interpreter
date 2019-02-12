@@ -63,7 +63,7 @@ void _initDate() {
 	prototype->setVariable("getTime", new NativeFunction([](ObjectValue &context) {
 		if (auto _this = context.getThis()) {
 			auto millis = context.getThis()->getVariable(internalValueName).toNumber();
-			return millis;
+			return (long)millis;
 		}
 		else {
 			throw RuntimeException("cannot call Date.getTime without object");

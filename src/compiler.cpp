@@ -86,6 +86,23 @@ StatementPointer Compiler::compile(AstUnit& unit, bool allowNull) {
 		}
 	}
 		break;
+	case unit.Array: {
+		auto brackets = unit.getByType(unit.ArrayBrackets);
+		brackets->groupUnit();
+		vector<StatementPointer> elements;
+		for (auto &elementUnit: *brackets) {
+			if (elementUnit->type == unit.Coma) {
+				continue;
+			}
+			auto s = compile(*elementUnit);
+			if (!s) {
+				throw CompilationException(unit.createToken(), "could not interpret statement " + elementUnit->createToken());
+			}
+			elements.push_back(s);
+		}
+		statement = new ArrayDefinition(elements);
+		break;
+	}
 	case unit.String:
 		statement = new StringLiteralStatement(unit.token);
 		break;

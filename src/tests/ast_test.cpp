@@ -322,9 +322,12 @@ TEST_CASE("function definition as argument") {
 TEST_CASE("property accessor vs array") {
 	AstUnit unit("b [3]");
 	AstUnit unit2("[1, 2, 3]");
+	AstUnit unit3("x = [1, 2]");
 
 	ASSERT_EQ(unit.type, unit.PropertyAccessor);
 	ASSERT_EQ(unit2.type, unit.Array);
+	ASSERT_EQ(unit3.type, unit.Assignment);
+	ASSERT_EQ(unit3[2].type, unit.Array);
 }
 
 TEST_CASE("return statement") {

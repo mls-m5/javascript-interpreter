@@ -516,6 +516,27 @@ TEST_CASE("new date object") {
 	ASSERT_EQ(Compiler::run("x.getTime()").type, Value::Integer)
 }
 
+TEST_CASE("array") {
+	VariableGuard g({"x"});
+
+	Compiler::run("let x = [3, 1, 2]");
+
+	ASSERT_EQ(Compiler::run("x[1]").toString(), "1");
+
+	Compiler::run("x[2] = 4");
+	ASSERT_EQ(Compiler::run("x[2]").toString(), "4");
+
+
+	Compiler::run("x = []");
+	Compiler::run("x[2] = 5");
+
+	ASSERT_EQ(Compiler::run("x[2]").toString(), "5");
+
+	Compiler::run("x[0] = 2");
+	ASSERT_EQ(Compiler::run("x[0]").toString(), "2");
+
+}
+
 TEST_SUIT_END
 
 

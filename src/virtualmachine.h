@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "value.h"
+#include "array.h"
 
 
 class BinaryStatement: public Statement {
@@ -85,7 +86,7 @@ public:
 			throw "no object defined";
 		}
 		auto memberValue = member->run(context);
-		auto evalueatedValue = value->run(context);
+		//auto evalueatedValue = value->run(context);
 
 		auto memberPtr = objectPtr->getOrDefineVariable(memberValue);
 		if (memberPtr.type == Value::Reference) {
@@ -414,6 +415,21 @@ public:
 		}
 
 		return Value(*object);
+	}
+};
+
+class ArrayDefinition: public Statement {
+public:
+	vector<StatementPointer> elements;
+
+	ArrayDefinition(vector<StatementPointer> elements): elements(std::move(elements)) {}
+
+	Value run(ObjectValue &context) override {
+		vector<Value> newElements(elements.size());
+		for (int i = 0; i < elements.size(); ++i) {
+			newElements[i] = elements[i]->run(context);
+		}
+		return new Array(move(newElements));
 	}
 };
 

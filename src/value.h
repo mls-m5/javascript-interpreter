@@ -279,10 +279,26 @@ public:
 
 	//Convert a value to a number
 	double toNumber();
-
-//	Value call(ObjectValue& context, class Value arguments, ObjectValue *thisPointer);
+	long toInteger() {
+		if (type == Integer) {
+			return intValue;
+		}
+		else {
+			return (int) toNumber();
+		}
+	}
 
 	string toString();
+
+	bool isNaN() {
+		if (type == Integer || type == Number) {
+			return false;
+		}
+		else {
+			//This should do some more advanced tests, more on that later i guess
+			return true;
+		}
+	}
 
 	void clear();
 
@@ -395,7 +411,7 @@ public:
 	virtual ObjectValue *getDefinitionContext() { return nullptr; };
 
 	//Old function
-	virtual Value getVariableStr(string identifier, bool allowReference = true) final {
+	Value getVariableStr(string identifier, bool allowReference = true) {
 		for (auto &it: children) {
 			if (it.first == identifier) {
 				if (allowReference) {
@@ -440,25 +456,14 @@ public:
 	}
 
 
-	vector<pair<string, Value>>::iterator getVariableIterator(Value identifier) {
-		auto stringIdentifier = identifier.toString();
 
-		for (auto it = children.begin(); it != children.end(); ++it) {
-			if ((*it).first == stringIdentifier) {
-				return it;
-			}
-		}
-
-		return children.end();
-	}
-
-	Value setVariable(string identifier, Value value, bool allowUndefined = false) {
+	virtual Value setVariable(Value identifier, Value value, bool allowUndefined = false) {
 		if (value.type == Value::Undefined && !allowUndefined) {
-			throw RuntimeException("value " + identifier + " not defined when setting variable");
+			throw RuntimeException("value " + identifier.toString() + " not defined when setting variable");
 		}
 		auto it = getVariableIterator(identifier);
 		if (it == children.end()) {
-			children.push_back(pair<string, Value>(identifier, value.getValue()));
+			children.push_back(pair<string, Value>(identifier.toString(), value.getValue()));
 			return &children.back().second;
 		}
 		else {
@@ -479,13 +484,14 @@ public:
 		}
 	}
 
-	void deleteVariable(string identifier) {
+	virtual Value deleteVariable(Value identifier) {
 		auto it = getVariableIterator(identifier);
 		if (it == children.end()) {
-			return;
+			return true;
 		}
 
 		children.erase(it);
+		return true;
 	}
 
 	operator string () {
@@ -527,6 +533,20 @@ public:
 
 	ObjectValue *prototype = Prototype();
 	bool alive = true;
+
+protected:
+
+	vector<pair<string, Value>>::iterator getVariableIterator(Value identifier) {
+		auto stringIdentifier = identifier.toString();
+
+		for (auto it = children.begin(); it != children.end(); ++it) {
+			if ((*it).first == stringIdentifier) {
+				return it;
+			}
+		}
+
+		return children.end();
+	}
 };
 
 
@@ -608,7 +628,7 @@ public:
 	}
 };
 
-//A specialiced closure used for new statements
+//A specialized closure used for new statements
 class NewClosure: public Closure {
 public:
 	ObjectValue *_newTarget; //the statement new.target
@@ -846,18 +866,6 @@ inline double Value::toNumber() {
 	return NaN;
 }
 
-//inline Value Value::call(ObjectValue& context, class Value arguments, ObjectValue *thisPointer) {
-//	if (type == Object) {
-//		if (!objectPtr) {
-//			throw "trying to call null statement";
-//		}
-//		return objectPtr->call(context, arguments, thisPointer);
-//	} else if (type == Reference) {
-//		return referencePtr->call(context, arguments, thisPointer);
-//	} else {
-//		throw RuntimeException("value '" + this->toString() + "' is not callable");
-//	}
-//}
 
 inline string Value::toString() {
 	switch (type) {
