@@ -32,15 +32,7 @@ public:
 		return true;
 	}
 
-	void mark() {
-		for (auto &value: values) {
-			if (value.type == value.Object && value.objectPtr) {
-				value.objectPtr->mark();
-			}
-		}
-
-		ObjectValue::mark();
-	}
+	void mark() override;
 
 	vector <Value> values;
 

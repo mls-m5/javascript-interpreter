@@ -164,6 +164,15 @@ Value Array::deleteVariable(Value identifier) {
 	return ObjectValue::deleteVariable(identifier);
 }
 
+void Array::mark() {
+	for (auto& value : values) {
+		if (auto o = value.getObject()) {
+			o->mark();
+		}
+	}
+	ObjectValue::mark();
+}
+
 string Array::toString() {
 	ostringstream ss;
 	ss << "[ ";

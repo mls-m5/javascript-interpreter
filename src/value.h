@@ -390,9 +390,6 @@ public:
 		for (auto &ptr: children) {
 			auto o = ptr.second.getObject();
 			if (o) {
-				if (ptr.second.type != Value::Object) {
-					throw "this should not happend";
-				}
 				o->mark();
 			}
 		}

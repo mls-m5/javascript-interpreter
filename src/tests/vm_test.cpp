@@ -25,12 +25,13 @@ public:
 		}
 		runGarbageCollection();
 
-		if (window.children.size() > variableCount) {
-			cout << "More variables in window after test --> test is leaking" << endl;
+		if (window.children.size() != variableCount) {
+			cout << "  Different variables in window after test --> test is leaking" << endl;
+			cout << "  " << window.children.size() << " after vs " << variableCount << " before" << endl;
 		}
 
-		if (getGlobalObjectCount() > globalObjects) {
-			cout << "  More global objects in window after test (" << globalObjects << "-->" << getGlobalObjectCount() << ") --> test is leaking" << endl;
+		if (getGlobalObjectCount() != globalObjects) {
+			cout << "  Different amount global objects in window after test (" << globalObjects << "-->" << getGlobalObjectCount() << ") --> test is leaking" << endl;
 		}
 
 		cout << "  global objects at end of test: " << getGlobalObjectCount() << endl;
@@ -545,8 +546,9 @@ TEST_CASE("array.map") {
 	VariableGuard g({"x", "y"});
 
 	Compiler::run("let x = [3, 1, 2]");
-//	auto value = Compiler::run(" x.map (function(x, y,z) { return arguments })"); //This crashes
-	auto value = Compiler::run("let y = x.map (function(x, y,z) { return x * 2 })"); //This crashes
+	Compiler::run(" x.map (function(x, y,z) { return arguments })").toString(); //this crashes
+
+	auto value = Compiler::run("let y = x.map (function(x, y,z) { return x * 2 })");
 	ASSERT_EQ(Compiler::run("y[0]").toString(), "6");
 	ASSERT_EQ(Compiler::run("y[2]").toString(), "4");
 }
