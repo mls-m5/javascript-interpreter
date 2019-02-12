@@ -11,9 +11,9 @@
 
 class Array: public ObjectValue {
 public:
-	Array() {};
-	Array(vector<Value> &values):values(values) {}
-	Array(vector<Value> &&values):values(move(values)) {}
+	Array();
+	Array(vector<Value>& values);
+	Array(vector<Value> && values);
 	virtual ~Array();
 
 	Value getVariable(Value identifier, bool allowReference = true) override;
@@ -27,6 +27,20 @@ public:
 	Value defineVariable(Value name, Value value = Value()) override;
 
 	virtual Value deleteVariable(Value identifier);
+
+	bool isArray() override {
+		return true;
+	}
+
+	void mark() {
+		for (auto &value: values) {
+			if (value.type == value.Object && value.objectPtr) {
+				value.objectPtr->mark();
+			}
+		}
+
+		ObjectValue::mark();
+	}
 
 	vector <Value> values;
 

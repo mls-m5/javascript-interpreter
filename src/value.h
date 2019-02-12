@@ -355,9 +355,15 @@ extern Value UndefinedValue;
 // on a ObjectValue variable.
 class ObjectValue {
 public:
-	ObjectValue() = default;
+	ObjectValue(): prototype(Prototype()) {};
+	ObjectValue(initializer_list<Value> list) {
+		Value index = 0;
+		for (auto item: list) {
+			defineVariable(index, item);
+			++index.intValue;
+		}
+	}
 	ObjectValue(ObjectValue *prototype): prototype(prototype) {}
-
 	ObjectValue(ObjectValue *prototype, ObjectValue *properties): prototype(prototype)
 	{
 		if (properties) {
@@ -384,6 +390,9 @@ public:
 		for (auto &ptr: children) {
 			auto o = ptr.second.getObject();
 			if (o) {
+				if (ptr.second.type != Value::Object) {
+					throw "this should not happend";
+				}
 				o->mark();
 			}
 		}
@@ -402,6 +411,8 @@ public:
 	virtual ObjectValue *getNewTarget() { return nullptr; }
 
 	virtual Value getArguments() { return UndefinedValue; };
+
+	virtual bool isArray() { return false; };
 
 	virtual Value call(ObjectValue &context) {
 		throw RuntimeException("object is not a function");
@@ -717,7 +728,6 @@ public:
 		//ActivationGuard(context, this); //Activates this function
 
 		auto ret = block->run(context);
-//		ret.resetReturnFlag();
 		return ret.resetReturnFlag();
 	}
 

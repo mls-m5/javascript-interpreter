@@ -17,12 +17,14 @@ Value UndefinedValue;
 void _initObject();
 void _initDate();
 void _initFunction();
+void _initArray();
 
 
 static class Initializer {
 public:
 	Initializer() {
 		_initObject();
+		_initArray();
 		_initFunction();
 		_initDate();
 		window.prototype = ObjectValue::Prototype();

@@ -30,10 +30,10 @@ public:
 		}
 
 		if (getGlobalObjectCount() > globalObjects) {
-			cout << "More global objects in window after test (" << globalObjects << "-->" << getGlobalObjectCount() << ") --> test is leaking" << endl;
+			cout << "  More global objects in window after test (" << globalObjects << "-->" << getGlobalObjectCount() << ") --> test is leaking" << endl;
 		}
 
-		cout << "global objects at end of test: " << getGlobalObjectCount() << endl;
+		cout << "  global objects at end of test: " << getGlobalObjectCount() << endl;
 		cout.flush();
 	}
 
@@ -517,15 +517,20 @@ TEST_CASE("new date object") {
 }
 
 TEST_CASE("array") {
-	VariableGuard g({"x"});
+	VariableGuard g({"x", "count"});
 
 	Compiler::run("let x = [3, 1, 2]");
+	Compiler::run("let count = 0");
+
+	Compiler::run("x.forEach(function(x) {count += x})");
+	ASSERT_EQ(Compiler::run("count").toString(), "6");
+
+	ASSERT_EQ(Compiler::run("x.length").toString(), "3");
 
 	ASSERT_EQ(Compiler::run("x[1]").toString(), "1");
 
 	Compiler::run("x[2] = 4");
 	ASSERT_EQ(Compiler::run("x[2]").toString(), "4");
-
 
 	Compiler::run("x = []");
 	Compiler::run("x[2] = 5");
@@ -534,7 +539,16 @@ TEST_CASE("array") {
 
 	Compiler::run("x[0] = 2");
 	ASSERT_EQ(Compiler::run("x[0]").toString(), "2");
+}
 
+TEST_CASE("array.map") {
+	VariableGuard g({"x", "y"});
+
+	Compiler::run("let x = [3, 1, 2]");
+//	auto value = Compiler::run(" x.map (function(x, y,z) { return arguments })"); //This crashes
+	auto value = Compiler::run("let y = x.map (function(x, y,z) { return x * 2 })"); //This crashes
+	ASSERT_EQ(Compiler::run("y[0]").toString(), "6");
+	ASSERT_EQ(Compiler::run("y[2]").toString(), "4");
 }
 
 TEST_SUIT_END
